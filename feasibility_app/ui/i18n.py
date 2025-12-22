@@ -212,6 +212,20 @@ TRANSLATIONS = {
         "col_metric": "Metric",
         "col_scenario": "Scenario",
 
+        "col_scenario": "Scenario",
+        "th_cash_flow": "Cash Flow",
+        "th_capex_vat": "CAPEX (w/ VAT)",
+        "th_delta_nwc": "Delta NWC",
+        "th_debt_principal": "Principal Repayment",
+        "th_debt_proceeds": "Debt Proceeds",
+        "th_equity_inject": "Equity Injection",
+        "th_fcf": "Free Cash Flow",
+        "th_lease_down": "Lease Downpayment",
+        "th_lease_repay": "Lease Repayment",
+        "th_grants_cash": "Grants (Cash)",
+        "th_fcfe": "FCFE",
+        "th_fcff": "FCFF",
+
         # Manual
         "manual_title": "Model Contract & User Manual",
 
@@ -611,6 +625,18 @@ TRANSLATIONS = {
         "th_ebt": "Vergi Öncesi Kar (VÖK)",
         "th_tax": "Vergi",
         "th_net_income": "Net Kar",
+        "th_cash_flow": "Nakit Akışı",
+        "th_capex_vat": "Yatırım (KDV Dahil)",
+        "th_delta_nwc": "İşletme Serm. Değ.",
+        "th_debt_principal": "Anapara Ödemesi",
+        "th_debt_proceeds": "Kredi Kullanımı",
+        "th_equity_inject": "Özkaynak Girişi",
+        "th_fcf": "Serbest Nakit Akışı",
+        "th_lease_down": "Kiralama Peşinatı",
+        "th_lease_repay": "Kiralama Ödemesi",
+        "th_grants_cash": "Hibe (Nakit)",
+        "th_fcfe": "Hissedar Nakit Akışı (FCFE)",
+        "th_fcff": "Firma Nakit Akışı (FCFF)",
         
         # Values / Enums
         "val_refinance": "Yeniden Finansman / Açık Kalsın",
