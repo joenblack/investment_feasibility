@@ -62,7 +62,7 @@ with tab1:
         df = pd.DataFrame(data)
         
     # 3.2 Required Fields Hint
-    st.info("💡 **A Product is Included only if:** Capacity > 0, OEE% > 0, Volume > 0, Price > 0, Scrap < 100%. Check the **Status** column.")
+    st.info(t("product_inclusion_hint"))
 
     # Column Config
     cc = {

@@ -478,11 +478,13 @@ TRANSLATIONS = {
         "col_cost_esc": "Maliyet Artışı",
         "col_capacity": "Kapasite/Yıl",
         "col_oee": "OEE %",
+
         "col_scrap": "Hurda %",
         "col_adv_pay": "Avans %",
         "col_terms": "Vade (Gün)",
         "save_changes": "Değişiklikleri Kaydet",
         "save_products": "Ürünleri Kaydet",
+        "product_inclusion_hint": "💡 **Bir ürünün hesaplamaya dahil olması için:** Kapasite > 0, OEE% > 0, Hacim > 0, Fiyat > 0, Hurda < %100 olmalıdır. **Status** kolonunu kontrol ediniz.",
         
         # New Deep Localization Keys
         "granularity_label": "Zaman Dilimi (Yıl/Ay)",
