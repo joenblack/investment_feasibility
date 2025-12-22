@@ -22,14 +22,14 @@ This application is a professional Investment Feasibility Tool designed for deta
 - **Perspective**: The Project / Firm as a whole.
 - **Cash Flow**: Free Cash Flow to Firm (FCFF).
 - **Discount Rate**: WACC (Weighted Average Cost of Capital).
-- **Formula**: $$ FCFF = EBIT \times (1 - Tax) + Depreciation - \Delta NWC - CAPEX $$
+- **Formula**:  FCFF = EBIT \times (1 - Tax) + Depreciation - \Delta NWC - CAPEX
 - **Use Case**: Evaluating the project's operational merit regardless of financing structure.
 
 ### Mode 2: Levered (FCFE - Equity View)
 - **Perspective**: Shareholders / Investors.
 - **Cash Flow**: Free Cash Flow to Equity (FCFE).
 - **Discount Rate**: Cost of Equity (Ke).
-- **Formula**: $$ FCFE = Net Income + Depreciation - \Delta NWC - CAPEX + New Debt - Debt Repayment $$
+- **Formula**: FCFE = Net Income + Depreciation - \Delta NWC - CAPEX + New Debt - Debt Repayment
 - **Use Case**: Determining the actual cash return to investors after debt service.
 
 ## 4. Key Features
@@ -120,14 +120,14 @@ Bu uygulama, detaylı finansal analiz ve risk değerlendirmesi için tasarlanmı
 - **Perspektif**: Projenin/Firmanın kendisi.
 - **Nakit Akışı**: Firmaya Serbest Nakit Akışı (FCFF).
 - **İskonto Oranı**: AOSM / WACC.
-- **Formül**: $$ FCFF = FVÖK \times (1 - Vergi) + Amortisman - \Delta İşl.Serm. - Yatırım $$
+- **Formül**:  FCFF = FVÖK \times (1 - Vergi) + Amortisman - \Delta İşl.Serm. - Yatırım 
 - **Kullanım**: Finansman yapısından bağımsız, projenin operasyonel değerini görmek için.
 
 ### Mod 2: Levered (FCFE - Ortak Görünümü)
 - **Perspektif**: Hissedarlar / Yatırımcılar.
 - **Nakit Akışı**: Özkaynağa Serbest Nakit Akışı (FCFE).
 - **İskonto Oranı**: Özkaynak Maliyeti (Ke).
-- **Formül**: $$ FCFE = Net Kar + Amortisman - \Delta İşl.Serm. - Yatırım + Yeni Kredi - Kredi Ödemesi $$
+- **Formül**:  FCFE = Net Kar + Amortisman - \Delta İşl.Serm. - Yatırım + Yeni Kredi - Kredi Ödemesi 
 - **Kullanım**: Borç ödendikten sonra yatırımcının cebine kalan net nakdi görmek için.
 
 ## 4. Temel Özellikler
