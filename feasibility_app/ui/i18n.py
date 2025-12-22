@@ -260,7 +260,7 @@ TRANSLATIONS = {
         "roi_help": "Return on Investment: (Total Net Profit / Total Investment) * 100.",
         
         "avg_revenue_help": "Average annual revenue calculated over the entire project horizon.",
-        "avg_ebitda_help": "Average annual EBITDA calculated over the entire project horizon.",
+        "avg_ebitda_help": "EBITDA: Earnings Before Interest, Taxes, Depreciation, and Amortization. Measures operational profitability.",
         "avg_margin_help": "Average EBITDA Margin (EBITDA / Revenue) over the horizon.",
     },
     "tr": {
@@ -648,7 +648,7 @@ TRANSLATIONS = {
         "roi_help": "Yatırım Getirisi: (Toplam Net Kar / Toplam Yatırım) * 100.",
         
         "avg_revenue_help": "Projenin tüm vadesi boyunca hesaplanan yıllık ortalama gelir.",
-        "avg_ebitda_help": "Projenin tüm vadesi boyunca hesaplanan yıllık ortalama FAVÖK.",
+        "avg_ebitda_help": "FAVÖK (EBITDA): Faiz, Amortisman ve Vergi Öncesi Kar. İşletmenin operasyonel karlılığını gösterir.",
         "avg_margin_help": "Projenin ortalama FAVÖK Marjı (FAVÖK / Gelir).",
     },
 }
