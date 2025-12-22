@@ -1,0 +1,397 @@
+MASTER PROMPT (Streamlit + Python – Ticari Seviye Yatırım Finans Analiz Uygulaması)
+0) Rol ve çıktı beklentisi
+
+Sen kıdemli bir ürün mühendisi + finansal modelleme uzmanı + yazılım mimarısın. Streamlit + Python kullanarak, makine/teçhizat ve bina yatırımı için ticari seviyede bir Yatırım Finans Analiz Uygulaması geliştireceksin.
+Uygulama, şirket içinde ürün geliştirme/teklif/fizibilite üretiminde kullanılacak kadar detaylı olmalı; doğru finans mantığı, sağlam veri modeli, testler, import/export, raporlama, Monte Carlo, duyarlılık analizi ve hata dayanıklılığı içermeli.
+
+Mutlak gereklilikler:
+
+Dil: Kod yorumları İngilizce olabilir, UI metinleri Türkçe/İngilizce seçilebilir (i18n altyapısı).
+
+Framework: Streamlit
+
+Dil: Python 3.11+
+
+Veri: SQLite (yerel) + JSON export/import + Excel export
+
+Test: pytest + smoke scripts
+
+Finans: Levered/Unlevered seçenekli (tek bir doğru yok; uygulama iki modu da desteklemeli ve metrikler aynı bazda tutarlı olmalı)
+
+Çıktı: Ticari uygulama standardında modüler repo + net dokümantasyon + kullanıcı kılavuzu sayfası + “model sözleşmesi” dokümanı.
+
+1) Ürün kapsamı (modüller)
+
+Uygulama aşağıdaki modülleri içermelidir:
+
+Proje / Portföy Yönetimi
+
+Birden fazla proje kaydı (SQLite)
+
+Proje kopyalama, versiyonlama (v1, v2…), karşılaştırma
+
+Senaryo yönetimi (Base/Best/Worst + kullanıcı tanımlı)
+
+Audit log (hangi parametre ne zaman değişti — basit düzeyde)
+
+Yatırım Yapısı
+
+CAPEX: Makine/teçhizat, bina/inşaat, altyapı, yazılım, AR-GE, kurulum, devreye alma, nakliye/gümrük, yedek parça, eğitim, izin/ruhsat, proje yönetim giderleri
+
+CAPEX zaman planı: yatırım harcaması yıl/ay bazlı (en az yıl bazlı, tercihen ay bazlı)
+
+İnşaat dönemi (construction phase) + devreye alma (ramp-up)
+
+Gelir Modeli
+
+Ürün bazlı gelir (SKU): birim satış, fiyat, büyüme, sezonsallık (opsiyon)
+
+Kapasite/ramp-up: kapasite kullanım oranı
+
+Kurlu gelir: satış para birimi seçimi + FX senaryosu
+
+Fiyat artış/enflasyon ile ayarlanabilir
+
+Maliyet Modeli
+
+Değişken maliyet: birim maliyet, hammadde, enerji, fire, bakım sarf
+
+Sabit gider: personel, kira, güvenlik, yazılım lisans, genel yönetim
+
+Personel modülü: pozisyon bazlı detay (brüt maaş, SGK, yan hak, zam, işe giriş tarihi)
+
+Bakım planı: CAPEX’e bağlı bakım yüzdesi / periyodik büyük bakım
+
+Finansman Modülü
+
+Özkaynak (equity)
+
+Banka kredisi: anapara, faiz, vade, grace period, ödeme tipi (eşit taksit, eşit anapara, bullet)
+
+Leasing: kira ödemeleri + amortisman/vergisel etkiler (basitleştirilmiş mod veya opsiyon)
+
+Hibe / teşvik: yüzde veya tutar bazlı; ödeme zamanı; CAPEX düşümü mü gelir mi?
+
+İşletme sermayesi kredisi (opsiyon)
+
+Kredi masrafları, komisyonlar
+
+Vergi ve Muhasebe
+
+Kurumlar vergisi oranı
+
+KDV (VAT) / yatırım KDV istisnası opsiyonu
+
+Amortisman: doğrusal, hızlandırılmış (opsiyon), varlık sınıfına göre faydalı ömür
+
+Zarar devri (loss carryforward) havuzu
+
+Enflasyon muhasebesi opsiyonu (ileri seviye opsiyon; varsayılan kapalı)
+
+Working Capital / NWC
+
+DSO/DIO/DPO ile NWC hesap
+
+Terminal NWC release (proje sonunda NWC’nin geri çözülmesi)
+
+Stok güvenlik seviyesi (opsiyon)
+
+Finansal Tablolar
+
+Gelir tablosu (P&L): Revenue, COGS, Gross Profit, OPEX, EBITDA, Depreciation, EBIT, Interest, EBT, Tax, Net Income
+
+Nakit akış tablosu: CFO/CFI/CFF ayrımı (en azından FCF)
+
+Bilanço (opsiyonel ama önerilir): NWC, PPE, Debt balance, Equity
+
+Metrikler ve Analiz
+
+NPV, IRR, Payback, DSCR, EBITDA margin, Net margin
+
+Break-even analysis (miktar/fiyat)
+
+Sensitivity (tornado): fiyat, hacim, maliyet, capex, kur, faiz
+
+Monte Carlo: parametre dağılımları, korelasyon opsiyonu
+
+Senaryo karşılaştırma: Base vs Best vs Worst
+
+Raporlama / Çıktılar
+
+Excel export (tüm tablolar + parametre özeti)
+
+PDF rapor (opsiyonel, en azından HTML/print-friendly sayfa)
+
+JSON export/import (tam tekrar üretilebilirlik)
+
+“Manual / Kullanım Kılavuzu” sayfası: modelin gerçek mantığı ile birebir uyumlu olmalı (koddan türeyen sözleşmeye dayanmalı)
+
+2) Finansal “Model Sözleşmesi” (kritik: tutarlılık)
+
+Uygulama iki ana mod sunmalı ve seçilen moda göre tüm metrikler aynı bazda hesaplanmalı:
+
+Mod 1 — Unlevered (FCFF / Proje Bazlı)
+
+CF0 = -Total CAPEX (yatırım harcaması akışı)
+
+CFt = EBIT*(1-tax) + Depreciation - ΔNWC - CAPEX(t) (operasyon yıllarında CAPEX varsa)
+
+Finansman (interest/principal) nakit akışına girmez.
+
+İskonto: WACC
+
+NPV/IRR/Payback/ROI hepsi “total investment” bazında
+
+Mod 2 — Levered (FCFE / Özkaynak Bazlı)
+
+EquityInvestment = TotalCAPEX - DebtDrawdown - Grants_that_reduce_capex (yaklaşımla tutarlı)
+
+CF0 = -EquityInvestment (veya yatırım fazlarına göre equity injection schedule)
+
+CFt = Net Income + Depreciation - ΔNWC - CAPEX(t) + DebtDrawdown(t) - PrincipalPayment(t)
+
+İskonto: Cost of Equity
+
+NPV/IRR/Payback/ROI hepsi “equity” bazında
+
+Zorunlu kural: Seçilen moda göre:
+
+NPV/IRR’nin cash flow stream’i
+
+ROI paydası
+
+Payback başlangıç yatırımı
+tamamen aynı bazda olmalı.
+
+3) Veri modeli (Pydantic / dataclass)
+
+Aşağıdaki yapıda bir “ProjectModel” tanımla (pydantic önerilir):
+
+Metadata: id, name, created_at, version, currency_base, locale
+
+Time settings: horizon_years, granularity (year/month), start_year
+
+CAPEX schedule: list of CAPEXItem(category, amount, currency, year/month, vat_rate, customs, freight…)
+
+Revenue model: products[ {name, unit_price, unit_cost, volume_by_year, growth, currency, fx_series_ref} ]
+
+OPEX: fixed_costs_by_year, headcount_module, energy_cost_model
+
+Finance: mode (levered/unlevered), equity, loans[], leasing[], grants[]
+
+Tax & accounting: tax_rate, depreciation_methods, loss_carryforward
+
+NWC: dso, dio, dpo, nwc_terminal_release
+
+FX & inflation: fx_scenarios, inflation_rate
+
+Risk: sensitivity params, monte carlo distributions
+
+Validasyon kuralları:
+
+Negatif satış/volume engelle
+
+loan_amount > capex ise clamp/uyarı
+
+tax_rate [0..1], dso/dio/dpo >= 0
+
+years/horizon min 3, max 30 (varsayılan 10)
+
+4) Uygulama mimarisi (repo yapısı)
+
+Aşağıdaki yapı ile üret:
+
+feasibility_app/
+  app.py                         # Streamlit entry
+  ui/
+    pages/                       # multi-page (streamlit pages)
+    components.py
+    i18n.py
+  core/
+    model.py                     # Pydantic models
+    engine.py                    # Financial calculations (pure functions)
+    finance.py                   # loan schedules, IRR/NPV, DSCR
+    depreciation.py
+    nwc.py
+    risk.py                      # sensitivity, monte carlo
+    reporting.py                 # export builders
+    validation.py
+  data/
+    db.py                        # SQLite CRUD
+    migrations.py (optional)
+  tests/
+    test_engine.py
+    test_zero_risk.py
+    test_import_export_roundtrip.py
+    test_loan_schedule.py
+  scripts/
+    smoke_run.py                 # run core calc with sample model
+  assets/
+    sample_project.json
+  requirements.txt
+  README.md
+  LICENSE (MIT internal use ok)
+
+
+Zorunlu prensip:
+
+core/engine.py UI’dan bağımsız olmalı; sadece model alıp sonuç döndürmeli.
+
+UI state kaybı yaşamamak için Streamlit session_state + model-sync pattern kullanılmalı.
+
+Her sayfa “model -> widgets -> model” senkronizasyonuna uymalı.
+
+Her metrik hesaplaması için baz (levered/unlevered) açıkça işlenmeli.
+
+5) UI / Sayfalar (Streamlit)
+
+Sayfaları aşağıdaki gibi tasarla:
+
+Dashboard (özet KPI + senaryo seçimi)
+
+Project Setup (para birimi, horizon, granularity, enflasyon, FX)
+
+CAPEX Planner (kategori bazlı + zaman planı + KDV/gümrük)
+
+Revenue (ürün bazlı)
+
+OPEX (sabit + değişken + personel)
+
+Finance (equity + loans + grants + leasing)
+
+Tax & Accounting (amortisman, tax, loss carryforward)
+
+Working Capital (DSO/DIO/DPO)
+
+Results
+
+P&L table
+
+Cash flow table
+
+Balance (opsiyon)
+
+KPI panel (NPV, IRR, DSCR, payback)
+
+Sensitivity (tornado)
+
+Monte Carlo (dist params, correlated/independent shocks, charts)
+
+Scenario Compare (Base/Best/Worst overlay)
+
+Export/Import (JSON + Excel + PDF/print)
+
+Manual (kılavuz + model sözleşmesi + formül açıklamaları)
+
+Grafikler:
+
+Plotly veya Altair kullanılabilir (Streamlit uyumlu).
+
+KPI’lar, tornado chart, distribution histograms, cumulative cash curve.
+
+6) Monte Carlo ve Sensitivity detay gereksinimleri
+
+Dağılım seçenekleri: triangular, normal, lognormal, uniform (en az triangular + normal)
+
+pct=0 olduğunda asla çökme (guard)
+
+volume shock: independent vs correlated
+
+FX shock: opsiyonel correlated
+
+çıktı: NPV dağılımı, IRR dağılımı, probability(NPV>0), VaR/percentiles
+
+7) Import/Export ve tekrar üretilebilirlik
+
+Zorunlu:
+
+JSON export: modelin tamamı + app version + schema version
+
+JSON import: tüm alanları geri yüklemeli, widget state senkronlanmalı
+
+Excel export: her tablo ayrı sheet + Inputs sheet + Scenario summary
+
+“Round-trip test”: export -> import -> compute -> aynı sonuç (toleransla)
+
+8) Güvenlik ve dağıtım
+
+API keys asla repoya yazılmayacak; yalnızca env var / Streamlit secrets
+
+.venv, *.key, *.txt secrets gitignore
+
+requirements pin’li
+
+README: kurulum, çalıştırma, test
+
+9) Test gereksinimleri (pytest)
+
+En az şu testler yazılmalı:
+
+test_zero_risk.py: Monte Carlo risk=0 crash yok
+
+test_import_export_roundtrip.py: JSON round-trip
+
+test_loan_schedule.py: grace period, balloon, amortization schedule
+
+test_engine.py: basit bir modelde NPV/IRR sanity check (elle doğrulanabilir)
+
+Sensitivity smoke: tornado çalışıyor
+
+10) Varsayımlar (AI soru sormasın diye)
+
+Varsayılan horizon: 10 yıl, yıllık granularity
+
+Vergi: %25
+
+Depreciation: doğrusal, makine 10 yıl, bina 25 yıl (kullanıcı değiştirebilir)
+
+NWC: DSO=60, DIO=45, DPO=30
+
+Discount: unlevered için WACC=20%, levered için CoE=25% (kullanıcı değiştirebilir)
+
+Para birimi: TRY, opsiyonel EUR/USD
+
+FX: kullanıcı isterse sabit kur veya yıllık seri
+
+11) “Done” kriterleri (teslim koşulu)
+
+Uygulama baştan sona çalışır, sayfalar arası veri kaybı olmaz.
+
+Levered/Unlevered seçimine göre tüm metrikler tutarlı hesaplanır.
+
+JSON import/export round-trip çalışır.
+
+Excel export çalışır.
+
+Monte Carlo 0% riskte çökmez.
+
+Manual sayfası, kodun model sözleşmesi ile birebir uyumlu olur.
+
+Tests: pytest -q başarılı (en az core testler).
+
+12) Çıktı formatı (AI’dan beklenen)
+
+Repo dosyalarının tamamını oluştur (yukarıdaki yapı ile)
+
+README + sample_project.json
+
+Test dosyalarını yaz
+
+Kısa “how to run” ve “how to validate” komutları
+
+Başla ve tüm dosyaları üret.
+
+
+---
+
+## Uygulama taktiği
+Bu master prompt çok büyük olduğu için AI aracı bazen tek seferde “tam repo” üretmekte zorlanır. En iyi sonuç için şu akışı kullanın:
+
+1) **Master prompt’u verin** ve “Repo iskeletini + core/engine.py + model.py + app.py temel navigasyonunu üret” deyin.  
+2) Sonra şu alt prompt’larla adım adım büyütün:
+   - “Şimdi loan schedule modülünü ve testlerini tamamla.”
+   - “Şimdi working capital (DSO/DIO/DPO) + terminal release ekle.”
+   - “Şimdi export/import round-trip + test yaz.”
+   - “Şimdi Monte Carlo + tornado ekle.”
+
+İsterseniz, bu master prompt’un “parçalara bölünmüş” (Sprint 1/2/3 diye) sürümünü de ayrıca çıkarabilirim; ama yukarıdaki metin, doğrudan yapay zekaya verilebilir seviyede kapsamlıdır.

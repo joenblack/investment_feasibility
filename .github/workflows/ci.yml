@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.10"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f feasibility_app/requirements.txt ]; then pip install -r feasibility_app/requirements.txt; fi
+        pip install pytest pytest-cov
+
+    - name: Generate Golden Data
+      run: |
+        python scripts/generate_golden.py
+      # Need to ensure python path finds core. 
+      # My script now adds ../feasibility_app so it relies on folder structure.
+      # In actions/checkout, likely root is repo root. 
+      # If repo root contains 'feasibility_app' and 'scripts', it should work.
+
+    - name: Run Tests
+      run: |
+        pytest feasibility_app/tests/

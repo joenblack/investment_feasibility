@@ -1,0 +1,86 @@
+{
+  "id": "2bb26672-f3f1-457c-bae0-3a4bf401d555",
+  "name": "Golden Project",
+  "created_at": "2025-12-21T18:35:33.196129",
+  "version": "1.0.0",
+  "description": "",
+  "currency_base": "TRY",
+  "granularity": "Year",
+  "horizon_years": 5,
+  "start_year": 2025,
+  "inflation_rate": 0.0,
+  "capex_items": [
+    {
+      "id": "3415adda-9b7a-467f-99d3-212c1569bccb",
+      "name": "Machine X",
+      "category": "Machinery",
+      "amount": 50000.0,
+      "currency": "TRY",
+      "year": 1,
+      "month": 1,
+      "vat_rate": 0.2,
+      "is_imported": false,
+      "customs_duty_rate": 0.0
+    }
+  ],
+  "products": [
+    {
+      "id": "08117b75-eafc-4325-ab18-8a72147c7fa4",
+      "name": "Widget A",
+      "unit_price": 100.0,
+      "unit_cost": 50.0,
+      "currency": "TRY",
+      "initial_volume": 1000.0,
+      "year_growth_rate": 0.1,
+      "price_escalation_rate": 0.0,
+      "cost_escalation_rate": 0.0
+    }
+  ],
+  "fixed_expenses": [],
+  "personnel": [],
+  "equity_contribution": 0.0,
+  "loans": [
+    {
+      "id": "8d430614-d349-424e-873d-2f22a2234ae7",
+      "name": "Loan A",
+      "amount": 40000.0,
+      "currency": "TRY",
+      "interest_rate": 0.1,
+      "term_years": 5,
+      "grace_period_years": 0,
+      "payment_method": "EqualPayment",
+      "start_year": 1
+    }
+  ],
+  "leasings": [],
+  "grants": [],
+  "tax_config": {
+    "corporate_tax_rate": 0.25,
+    "loss_carryforward_limit_years": 5,
+    "machinery_useful_life": 10,
+    "building_useful_life": 25,
+    "depreciation_method": "StraightLine",
+    "vat_exemption": false
+  },
+  "nwc_config": {
+    "dso": 60.0,
+    "dio": 45.0,
+    "dpo": 30.0,
+    "terminal_release": true
+  },
+  "risk_config": {
+    "monte_carlo_iterations": 1000,
+    "random_seed": 42,
+    "var_configs": {},
+    "correlation_base": {}
+  },
+  "tv_config": {
+    "method": "None",
+    "growth_rate": 0.02,
+    "exit_multiple": 7.0
+  },
+  "discount_rate_unlevered": 0.2,
+  "discount_rate_levered": 0.25,
+  "calculation_mode": "Unlevered",
+  "terminal_debt_treatment": "payoff"
+}

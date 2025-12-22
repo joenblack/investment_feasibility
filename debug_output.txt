@@ -1,0 +1,1110 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.9, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\mustafa.cevik\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\mustafa.cevik\Desktop\Ki■isel\Yatirim-Fizibilite-Program
+plugins: anyio-4.9.0
+collecting ... collected 3 items
+
+feasibility_app/tests/test_granularity.py::test_granularity_comparison FAILED [ 33%]
+feasibility_app/tests/test_granularity.py::test_loan_monthly_schedule FAILED [ 66%]
+feasibility_app/tests/test_granularity.py::test_compounding_growth FAILED [100%]
+
+================================== FAILURES ===================================
+_________________________ test_granularity_comparison _________________________
+
+    def test_granularity_comparison():
+        # Model 1: Year
+        py = create_model()
+        py.granularity = "Year"
+        res_y = calculate_financials(py)
+    
+        # Model 2: Month
+        pm = create_model()
+        pm.granularity = "Month"
+>       res_m = calculate_financials(pm)
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+
+feasibility_app\tests\test_granularity.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = ProjectModel(id='7a1d593d-bb37-423d-a0d0-2c05e3e46b15', name='New Feasibility Project', created_at=datetime.datetime(2...iscount_rate_unlevered=0.2, discount_rate_levered=0.25, calculation_mode='Unlevered', terminal_debt_treatment='payoff')
+
+    def calculate_financials(model: ProjectModel) -> FinancialResults:
+        horizon = model.horizon_years
+        pp_year = 12 if model.granularity == "Month" else 1
+        total_periods = horizon * pp_year
+    
+        # Years labels for Monthly would be dates or 1..12?
+        # For reporting (Annual), we just stick to 1..Horizon.
+        # The output 'years' list will be Annual for simplicity in chart x-axis unless monthly.
+        years = list(range(1, horizon + 1))
+    
+        # 1. Revenue & OPEX
+        revenue = np.zeros(total_periods)
+        cogs = np.zeros(total_periods)
+    
+        for prod in model.products:
+            # Initial annual figures
+            annual_vol = prod.initial_volume
+            unit_price = prod.unit_price
+            unit_cost = prod.unit_cost
+    
+            # Per period figures
+            period_vol = annual_vol / pp_year
+    
+            # Effective period growth rates
+            # (1 + r_annual) = (1 + r_period)^pp
+            # r_period = (1 + r_annual)^(1/pp) - 1
+            vol_growth_p = (1 + prod.year_growth_rate) ** (1.0 / pp_year) - 1
+            price_growth_p = (1 + prod.price_escalation_rate) ** (1.0 / pp_year) - 1
+            cost_growth_p = (1 + prod.cost_escalation_rate) ** (1.0 / pp_year) - 1
+    
+            for i in range(total_periods):
+                revenue[i] += period_vol * unit_price
+                cogs[i] += period_vol * unit_cost
+    
+                # Growth each period
+                period_vol *= (1 + vol_growth_p)
+                unit_price *= (1 + price_growth_p)
+                unit_cost *= (1 + cost_growth_p)
+    
+        gross_profit = revenue - cogs
+    
+        opex = np.zeros(total_periods)
+        # Fixed Expenses
+        for exp in model.fixed_expenses:
+            annual_amount = exp.amount_per_year
+            period_amount = annual_amount / pp_year
+            rate_p = (1 + exp.growth_rate) ** (1.0 / pp_year) - 1
+    
+            for i in range(total_periods):
+                opex[i] += period_amount
+                period_amount *= (1 + rate_p)
+    
+        # Personnel
+        for pers in model.personnel:
+            # Annual cost = count * monthly * 12 * (1+tax)
+            total_annual_cost = pers.count * pers.monthly_gross_salary * 12 * (1 + pers.sgk_tax_rate)
+            # Period cost
+            period_cost = total_annual_cost / pp_year
+    
+            rate_p = (1 + pers.yearly_raise_rate) ** (1.0 / pp_year) - 1
+    
+            # Start period
+            start_idx = (pers.start_year - 1) * pp_year
+    
+            for i in range(total_periods):
+                if i >= start_idx:
+                    opex[i] += period_cost
+                    period_cost *= (1 + rate_p)
+    
+        ebitda = gross_profit - opex
+    
+        # 2. CAPEX & Depreciation
+        total_capex_flow = np.zeros(total_periods)
+        dep_base_items = []
+    
+        # Flags
+        vat_exempt = model.tax_config.vat_exemption
+    
+        for item in model.capex_items:
+            # Determine period index
+            if pp_year == 12:
+                # Assume item.month is 1-based (1..12). Defaults to 1.
+                m = item.month if 1 <= item.month <= 12 else 1
+                idx = (item.year - 1) * pp_year + (m - 1)
+            else:
+                idx = item.year - 1
+    
+            if 0 <= idx < total_periods:
+                base_amount = item.amount
+    
+                # Customs Duty
+                customs_cost = 0.0
+                if item.is_imported:
+                    customs_cost = base_amount * item.customs_duty_rate
+    
+                # VAT
+                vat_cost = 0.0
+                if not vat_exempt:
+                    vat_base = base_amount + customs_cost
+                    vat_cost = vat_base * item.vat_rate
+    
+                total_outflow = base_amount + customs_cost + vat_cost
+                total_capex_flow[idx] += total_outflow
+    
+                # Depreciation Base
+                dep_item = item.copy()
+                dep_item.amount = base_amount + customs_cost
+                dep_base_items.append(dep_item)
+    
+        # 3. Grants (Incentives)
+        grant_income_taxable = np.zeros(total_periods)
+        grant_cash_inflow = np.zeros(total_periods)
+    
+        for grant in model.grants:
+            # Grants usually per year? Or specific year.
+            # Assume Year 1 means start of Year 1.
+            idx = (grant.year - 1) * pp_year
+            if 0 <= idx < total_periods:
+                grant_cash_inflow[idx] += grant.amount
+                if not grant.is_capex_reduction:
+                    grant_income_taxable[idx] += grant.amount
+                else:
+                    pass
+    
+        # Calculate Depreciation (Initial)
+        dep_amort = depreciation.aggregate_depreciation(
+            dep_base_items,
+            horizon,
+            model.tax_config.machinery_useful_life,
+            model.tax_config.building_useful_life,
+            payments_per_year=pp_year
+        )
+    
+        # Adjust Depreciation for Grants
+        total_capex_reduction_grants = sum(g.amount for g in model.grants if g.is_capex_reduction)
+        if total_capex_reduction_grants > 0:
+            avg_life_periods = ((model.tax_config.machinery_useful_life + model.tax_config.building_useful_life) / 2) * pp_year
+            period_dep_reduction = total_capex_reduction_grants / avg_life_periods
+            # DEBUG
+            # print(f"DEBUG: dep_amort shape {dep_amort.shape}, period_dep_reduction {period_dep_reduction}")
+            dep_amort = np.maximum(0, dep_amort - period_dep_reduction)
+    
+        # 4. Finance (Loans & Leasing)
+        interest_expense = np.zeros(total_periods)
+        principal_payment = np.zeros(total_periods)
+        debt_drawdown = np.zeros(total_periods)
+    
+        # Loans
+        for loan in model.loans:
+            schedule = finance.calculate_loan_schedule(
+                loan.amount,
+                loan.interest_rate,
+                loan.term_years,
+                loan.payment_method,
+                loan.start_year,
+                horizon,
+                loan.grace_period_years,
+                payments_per_year=pp_year
+            )
+            interest_expense += schedule["interest"]
+            principal_payment += schedule["principal"]
+            debt_drawdown += schedule["drawdown"]
+    
+        # Leasing (Finance Lease Logic)
+        leasing_interest = np.zeros(total_periods)
+        leasing_principal = np.zeros(total_periods)
+        leasing_downpayment = np.zeros(total_periods)
+    
+        for lease in model.leasings:
+            # Asset Side: Depreciate
+            lease_life_periods = model.tax_config.machinery_useful_life * pp_year
+            period_dep = lease.asset_value / lease_life_periods
+    
+            for i in range(min(total_periods, lease_life_periods)):
+                dep_amort[i] += period_dep
+    
+            # Liability Side: Schedule
+            if lease.down_payment > 0:
+                leasing_downpayment[0] += lease.down_payment
+    
+            financed_amt = lease.asset_value - lease.down_payment
+            schedule = finance.calculate_loan_schedule(
+                financed_amt,
+                lease.annual_interest_rate,
+                lease.term_years,
+                "EqualPayment",
+                1, # Start Year 1
+                horizon,
+                0,
+                payments_per_year=pp_year
+            )
+            leasing_interest += schedule["interest"]
+            leasing_principal += schedule["principal"]
+    
+        total_interest = interest_expense + leasing_interest
+    
+        # EBIT (Operating) calculation
+        # Grant taxable income is typically "Other Income" below EBITDA
+        ebit = ebitda - dep_amort
+    
+        # EBT
+        ebt = ebit - total_interest + grant_income_taxable
+    
+        # 5. Tax (Loss Carryforward)
+        tax_payment = np.zeros(total_periods)
+        accumulated_loss = 0.0
+    
+        for i in range(total_periods):
+            ebt_curr = ebt[i]
+    
+            if ebt_curr < 0:
+                tax_payment[i] = 0.0
+                accumulated_loss += abs(ebt_curr)
+            else:
+                loss_usage = min(ebt_curr, accumulated_loss)
+                taxable_base = ebt_curr - loss_usage
+    
+                tax_payment[i] = taxable_base * model.tax_config.corporate_tax_rate
+                accumulated_loss -= loss_usage
+    
+        net_income = ebt - tax_payment
+    
+        # 6. Working Capital
+        nwc_res = nwc.calculate_nwc(
+            revenue, cogs, opex,
+            model.nwc_config.dso,
+            model.nwc_config.dio,
+            model.nwc_config.dpo,
+            periods_per_year=pp_year
+        )
+        delta_nwc = nwc_res["delta_nwc"]
+    
+        # 7. Terminal Debt Treatment
+        ending_debt = 0.0
+    
+        # Calculate ending debt balance
+        total_debt_balance_arr = np.zeros(total_periods)
+        for loan in model.loans:
+            schedule = finance.calculate_loan_schedule(
+                loan.amount, loan.interest_rate, loan.term_years, loan.payment_method, loan.start_year, horizon, loan.grace_period_years, payments_per_year=pp_year
+            )
+            total_debt_balance_arr += schedule["balance"]
+    
+        for lease in model.leasings:
+            financed_amt = lease.asset_value - lease.down_payment
+            schedule = finance.calculate_loan_schedule(
+                financed_amt, lease.annual_interest_rate, lease.term_years, "EqualPayment", 1, horizon, 0, payments_per_year=pp_year
+            )
+            total_debt_balance_arr += schedule["balance"]
+    
+        ending_debt = total_debt_balance_arr[-1]
+        terminal_payoff_amount = 0.0
+    
+        if ending_debt > 1.0: # Tolerance
+            if model.terminal_debt_treatment == "payoff" and model.calculation_mode == "Levered":
+                terminal_payoff_amount = ending_debt
+                principal_payment[-1] += terminal_payoff_amount
+                ending_debt = 0.0
+    
+        # 8. Cash Flow Construction
+    
+        # Levered (FCFE)
+        fcfe = (net_income
+                + dep_amort
+                - delta_nwc
+                - total_capex_flow
+                - leasing_downpayment
+                + debt_drawdown
+                - principal_payment
+                - leasing_principal
+                + grant_cash_inflow)
+    
+        # FCFF
+        nopat = (ebitda - dep_amort + grant_income_taxable) * (1 - model.tax_config.corporate_tax_rate)
+    
+        fcff = (nopat
+                + dep_amort
+                - delta_nwc
+                - total_capex_flow
+                - leasing_downpayment
+                + grant_cash_inflow)
+    
+        if model.nwc_config.terminal_release:
+            term_balance = nwc_res["nwc_balance"][-1] if len(nwc_res["nwc_balance"]) > 0 else 0
+            fcfe[-1] += term_balance
+            fcff[-1] += term_balance
+    
+        # --- Aggregation for Reporting & Metrics ---
+        # We aggregate everything to Annual for consistent output and metrics calculation
+    
+        def aggr_sum(arr):
+            if pp_year == 1: return arr
+            return arr.reshape(-1, pp_year).sum(axis=1)
+    
+        def aggr_last(arr):
+            if pp_year == 1: return arr
+            return arr.reshape(-1, pp_year)[:, -1]
+    
+        rev_a = aggr_sum(revenue)
+        cogs_a = aggr_sum(cogs)
+        opex_a = aggr_sum(opex)
+        ebitda_a = aggr_sum(ebitda)
+        dep_a = aggr_sum(dep_amort)
+        grant_inc_a = aggr_sum(grant_income_taxable)
+        interest_a = aggr_sum(total_interest)
+        ebt_a = aggr_sum(ebt)
+        tax_a = aggr_sum(tax_payment)
+        ni_a = aggr_sum(net_income)
+    
+        nwc_delta_a = aggr_sum(delta_nwc)
+    
+        capex_a = aggr_sum(total_capex_flow)
+        lease_down_a = aggr_sum(leasing_downpayment)
+        draw_a = aggr_sum(debt_drawdown)
+        princ_a = aggr_sum(principal_payment)
+        lease_princ_a = aggr_sum(leasing_principal)
+        grant_cash_a = aggr_sum(grant_cash_inflow)
+        fcfe_a = aggr_sum(fcfe)
+        fcff_a = aggr_sum(fcff)
+    
+        # 9. Metrics (on Annual Flows)
+        if model.calculation_mode == "Unlevered":
+            target_stream = fcff_a
+            initial_invest = 0.0
+            discount_rate = model.discount_rate_unlevered
+        else:
+            target_stream = fcfe_a
+            initial_invest = model.equity_contribution
+            discount_rate = model.discount_rate_levered
+    
+        full_cash_flows = np.insert(target_stream, 0, -initial_invest)
+        metrics = finance.calculate_metrics(full_cash_flows, discount_rate)
+    
+        # --- DSCR Calculation (Annual) ---
+        # Cash Flow Available for Debt Service (CFADS)
+        # Approx: EBITDA - Tax - NWC Change - CAPEX + Grant Cash
+        # Note: CAPEX is usually strictly maintenance for DSCR, but here we take total.
+        # Note: Tax is "Tax Paid".
+        cfads = ebitda_a - tax_a - nwc_delta_a - capex_a + grant_cash_a
+>       debt_service = princ_a + interest_a + lease_princ_a + (leasing_interest if 'leasing_interest' in locals() else 0)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: operands could not be broadcast together with shapes (3,) (36,)
+
+feasibility_app\core\engine.py:360: ValueError
+_________________________ test_loan_monthly_schedule __________________________
+
+    def test_loan_monthly_schedule():
+        p = create_model()
+        p.granularity = "Month"
+        # Loan: 12000, 1 year term, 0% rate for simplicity first
+        l = Loan(amount=12000, term_years=1, interest_rate=0.0, payment_method="EqualPrincipal")
+        p.loans.append(l)
+    
+>       res = calculate_financials(p)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+
+feasibility_app\tests\test_granularity.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = ProjectModel(id='718ed796-1dad-48d3-abb9-4e020846ab04', name='New Feasibility Project', created_at=datetime.datetime(2...iscount_rate_unlevered=0.2, discount_rate_levered=0.25, calculation_mode='Unlevered', terminal_debt_treatment='payoff')
+
+    def calculate_financials(model: ProjectModel) -> FinancialResults:
+        horizon = model.horizon_years
+        pp_year = 12 if model.granularity == "Month" else 1
+        total_periods = horizon * pp_year
+    
+        # Years labels for Monthly would be dates or 1..12?
+        # For reporting (Annual), we just stick to 1..Horizon.
+        # The output 'years' list will be Annual for simplicity in chart x-axis unless monthly.
+        years = list(range(1, horizon + 1))
+    
+        # 1. Revenue & OPEX
+        revenue = np.zeros(total_periods)
+        cogs = np.zeros(total_periods)
+    
+        for prod in model.products:
+            # Initial annual figures
+            annual_vol = prod.initial_volume
+            unit_price = prod.unit_price
+            unit_cost = prod.unit_cost
+    
+            # Per period figures
+            period_vol = annual_vol / pp_year
+    
+            # Effective period growth rates
+            # (1 + r_annual) = (1 + r_period)^pp
+            # r_period = (1 + r_annual)^(1/pp) - 1
+            vol_growth_p = (1 + prod.year_growth_rate) ** (1.0 / pp_year) - 1
+            price_growth_p = (1 + prod.price_escalation_rate) ** (1.0 / pp_year) - 1
+            cost_growth_p = (1 + prod.cost_escalation_rate) ** (1.0 / pp_year) - 1
+    
+            for i in range(total_periods):
+                revenue[i] += period_vol * unit_price
+                cogs[i] += period_vol * unit_cost
+    
+                # Growth each period
+                period_vol *= (1 + vol_growth_p)
+                unit_price *= (1 + price_growth_p)
+                unit_cost *= (1 + cost_growth_p)
+    
+        gross_profit = revenue - cogs
+    
+        opex = np.zeros(total_periods)
+        # Fixed Expenses
+        for exp in model.fixed_expenses:
+            annual_amount = exp.amount_per_year
+            period_amount = annual_amount / pp_year
+            rate_p = (1 + exp.growth_rate) ** (1.0 / pp_year) - 1
+    
+            for i in range(total_periods):
+                opex[i] += period_amount
+                period_amount *= (1 + rate_p)
+    
+        # Personnel
+        for pers in model.personnel:
+            # Annual cost = count * monthly * 12 * (1+tax)
+            total_annual_cost = pers.count * pers.monthly_gross_salary * 12 * (1 + pers.sgk_tax_rate)
+            # Period cost
+            period_cost = total_annual_cost / pp_year
+    
+            rate_p = (1 + pers.yearly_raise_rate) ** (1.0 / pp_year) - 1
+    
+            # Start period
+            start_idx = (pers.start_year - 1) * pp_year
+    
+            for i in range(total_periods):
+                if i >= start_idx:
+                    opex[i] += period_cost
+                    period_cost *= (1 + rate_p)
+    
+        ebitda = gross_profit - opex
+    
+        # 2. CAPEX & Depreciation
+        total_capex_flow = np.zeros(total_periods)
+        dep_base_items = []
+    
+        # Flags
+        vat_exempt = model.tax_config.vat_exemption
+    
+        for item in model.capex_items:
+            # Determine period index
+            if pp_year == 12:
+                # Assume item.month is 1-based (1..12). Defaults to 1.
+                m = item.month if 1 <= item.month <= 12 else 1
+                idx = (item.year - 1) * pp_year + (m - 1)
+            else:
+                idx = item.year - 1
+    
+            if 0 <= idx < total_periods:
+                base_amount = item.amount
+    
+                # Customs Duty
+                customs_cost = 0.0
+                if item.is_imported:
+                    customs_cost = base_amount * item.customs_duty_rate
+    
+                # VAT
+                vat_cost = 0.0
+                if not vat_exempt:
+                    vat_base = base_amount + customs_cost
+                    vat_cost = vat_base * item.vat_rate
+    
+                total_outflow = base_amount + customs_cost + vat_cost
+                total_capex_flow[idx] += total_outflow
+    
+                # Depreciation Base
+                dep_item = item.copy()
+                dep_item.amount = base_amount + customs_cost
+                dep_base_items.append(dep_item)
+    
+        # 3. Grants (Incentives)
+        grant_income_taxable = np.zeros(total_periods)
+        grant_cash_inflow = np.zeros(total_periods)
+    
+        for grant in model.grants:
+            # Grants usually per year? Or specific year.
+            # Assume Year 1 means start of Year 1.
+            idx = (grant.year - 1) * pp_year
+            if 0 <= idx < total_periods:
+                grant_cash_inflow[idx] += grant.amount
+                if not grant.is_capex_reduction:
+                    grant_income_taxable[idx] += grant.amount
+                else:
+                    pass
+    
+        # Calculate Depreciation (Initial)
+        dep_amort = depreciation.aggregate_depreciation(
+            dep_base_items,
+            horizon,
+            model.tax_config.machinery_useful_life,
+            model.tax_config.building_useful_life,
+            payments_per_year=pp_year
+        )
+    
+        # Adjust Depreciation for Grants
+        total_capex_reduction_grants = sum(g.amount for g in model.grants if g.is_capex_reduction)
+        if total_capex_reduction_grants > 0:
+            avg_life_periods = ((model.tax_config.machinery_useful_life + model.tax_config.building_useful_life) / 2) * pp_year
+            period_dep_reduction = total_capex_reduction_grants / avg_life_periods
+            # DEBUG
+            # print(f"DEBUG: dep_amort shape {dep_amort.shape}, period_dep_reduction {period_dep_reduction}")
+            dep_amort = np.maximum(0, dep_amort - period_dep_reduction)
+    
+        # 4. Finance (Loans & Leasing)
+        interest_expense = np.zeros(total_periods)
+        principal_payment = np.zeros(total_periods)
+        debt_drawdown = np.zeros(total_periods)
+    
+        # Loans
+        for loan in model.loans:
+            schedule = finance.calculate_loan_schedule(
+                loan.amount,
+                loan.interest_rate,
+                loan.term_years,
+                loan.payment_method,
+                loan.start_year,
+                horizon,
+                loan.grace_period_years,
+                payments_per_year=pp_year
+            )
+            interest_expense += schedule["interest"]
+            principal_payment += schedule["principal"]
+            debt_drawdown += schedule["drawdown"]
+    
+        # Leasing (Finance Lease Logic)
+        leasing_interest = np.zeros(total_periods)
+        leasing_principal = np.zeros(total_periods)
+        leasing_downpayment = np.zeros(total_periods)
+    
+        for lease in model.leasings:
+            # Asset Side: Depreciate
+            lease_life_periods = model.tax_config.machinery_useful_life * pp_year
+            period_dep = lease.asset_value / lease_life_periods
+    
+            for i in range(min(total_periods, lease_life_periods)):
+                dep_amort[i] += period_dep
+    
+            # Liability Side: Schedule
+            if lease.down_payment > 0:
+                leasing_downpayment[0] += lease.down_payment
+    
+            financed_amt = lease.asset_value - lease.down_payment
+            schedule = finance.calculate_loan_schedule(
+                financed_amt,
+                lease.annual_interest_rate,
+                lease.term_years,
+                "EqualPayment",
+                1, # Start Year 1
+                horizon,
+                0,
+                payments_per_year=pp_year
+            )
+            leasing_interest += schedule["interest"]
+            leasing_principal += schedule["principal"]
+    
+        total_interest = interest_expense + leasing_interest
+    
+        # EBIT (Operating) calculation
+        # Grant taxable income is typically "Other Income" below EBITDA
+        ebit = ebitda - dep_amort
+    
+        # EBT
+        ebt = ebit - total_interest + grant_income_taxable
+    
+        # 5. Tax (Loss Carryforward)
+        tax_payment = np.zeros(total_periods)
+        accumulated_loss = 0.0
+    
+        for i in range(total_periods):
+            ebt_curr = ebt[i]
+    
+            if ebt_curr < 0:
+                tax_payment[i] = 0.0
+                accumulated_loss += abs(ebt_curr)
+            else:
+                loss_usage = min(ebt_curr, accumulated_loss)
+                taxable_base = ebt_curr - loss_usage
+    
+                tax_payment[i] = taxable_base * model.tax_config.corporate_tax_rate
+                accumulated_loss -= loss_usage
+    
+        net_income = ebt - tax_payment
+    
+        # 6. Working Capital
+        nwc_res = nwc.calculate_nwc(
+            revenue, cogs, opex,
+            model.nwc_config.dso,
+            model.nwc_config.dio,
+            model.nwc_config.dpo,
+            periods_per_year=pp_year
+        )
+        delta_nwc = nwc_res["delta_nwc"]
+    
+        # 7. Terminal Debt Treatment
+        ending_debt = 0.0
+    
+        # Calculate ending debt balance
+        total_debt_balance_arr = np.zeros(total_periods)
+        for loan in model.loans:
+            schedule = finance.calculate_loan_schedule(
+                loan.amount, loan.interest_rate, loan.term_years, loan.payment_method, loan.start_year, horizon, loan.grace_period_years, payments_per_year=pp_year
+            )
+            total_debt_balance_arr += schedule["balance"]
+    
+        for lease in model.leasings:
+            financed_amt = lease.asset_value - lease.down_payment
+            schedule = finance.calculate_loan_schedule(
+                financed_amt, lease.annual_interest_rate, lease.term_years, "EqualPayment", 1, horizon, 0, payments_per_year=pp_year
+            )
+            total_debt_balance_arr += schedule["balance"]
+    
+        ending_debt = total_debt_balance_arr[-1]
+        terminal_payoff_amount = 0.0
+    
+        if ending_debt > 1.0: # Tolerance
+            if model.terminal_debt_treatment == "payoff" and model.calculation_mode == "Levered":
+                terminal_payoff_amount = ending_debt
+                principal_payment[-1] += terminal_payoff_amount
+                ending_debt = 0.0
+    
+        # 8. Cash Flow Construction
+    
+        # Levered (FCFE)
+        fcfe = (net_income
+                + dep_amort
+                - delta_nwc
+                - total_capex_flow
+                - leasing_downpayment
+                + debt_drawdown
+                - principal_payment
+                - leasing_principal
+                + grant_cash_inflow)
+    
+        # FCFF
+        nopat = (ebitda - dep_amort + grant_income_taxable) * (1 - model.tax_config.corporate_tax_rate)
+    
+        fcff = (nopat
+                + dep_amort
+                - delta_nwc
+                - total_capex_flow
+                - leasing_downpayment
+                + grant_cash_inflow)
+    
+        if model.nwc_config.terminal_release:
+            term_balance = nwc_res["nwc_balance"][-1] if len(nwc_res["nwc_balance"]) > 0 else 0
+            fcfe[-1] += term_balance
+            fcff[-1] += term_balance
+    
+        # --- Aggregation for Reporting & Metrics ---
+        # We aggregate everything to Annual for consistent output and metrics calculation
+    
+        def aggr_sum(arr):
+            if pp_year == 1: return arr
+            return arr.reshape(-1, pp_year).sum(axis=1)
+    
+        def aggr_last(arr):
+            if pp_year == 1: return arr
+            return arr.reshape(-1, pp_year)[:, -1]
+    
+        rev_a = aggr_sum(revenue)
+        cogs_a = aggr_sum(cogs)
+        opex_a = aggr_sum(opex)
+        ebitda_a = aggr_sum(ebitda)
+        dep_a = aggr_sum(dep_amort)
+        grant_inc_a = aggr_sum(grant_income_taxable)
+        interest_a = aggr_sum(total_interest)
+        ebt_a = aggr_sum(ebt)
+        tax_a = aggr_sum(tax_payment)
+        ni_a = aggr_sum(net_income)
+    
+        nwc_delta_a = aggr_sum(delta_nwc)
+    
+        capex_a = aggr_sum(total_capex_flow)
+        lease_down_a = aggr_sum(leasing_downpayment)
+        draw_a = aggr_sum(debt_drawdown)
+        princ_a = aggr_sum(principal_payment)
+        lease_princ_a = aggr_sum(leasing_principal)
+        grant_cash_a = aggr_sum(grant_cash_inflow)
+        fcfe_a = aggr_sum(fcfe)
+        fcff_a = aggr_sum(fcff)
+    
+        # 9. Metrics (on Annual Flows)
+        if model.calculation_mode == "Unlevered":
+            target_stream = fcff_a
+            initial_invest = 0.0
+            discount_rate = model.discount_rate_unlevered
+        else:
+            target_stream = fcfe_a
+            initial_invest = model.equity_contribution
+            discount_rate = model.discount_rate_levered
+    
+        full_cash_flows = np.insert(target_stream, 0, -initial_invest)
+        metrics = finance.calculate_metrics(full_cash_flows, discount_rate)
+    
+        # --- DSCR Calculation (Annual) ---
+        # Cash Flow Available for Debt Service (CFADS)
+        # Approx: EBITDA - Tax - NWC Change - CAPEX + Grant Cash
+        # Note: CAPEX is usually strictly maintenance for DSCR, but here we take total.
+        # Note: Tax is "Tax Paid".
+        cfads = ebitda_a - tax_a - nwc_delta_a - capex_a + grant_cash_a
+>       debt_service = princ_a + interest_a + lease_princ_a + (leasing_interest if 'leasing_interest' in locals() else 0)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: operands could not be broadcast together with shapes (3,) (36,)
+
+feasibility_app\core\engine.py:360: ValueError
+___________________________ test_compounding_growth ___________________________
+
+    def test_compounding_growth():
+        # Verify (1+r) vs (1+r)^(1/12) consistency
+        p = create_model()
+        p.products[0].unit_price = 100.0
+        p.products[0].price_escalation_rate = 0.12 # 12%
+    
+        # Year mode
+        p.granularity = "Year"
+        res_y = calculate_financials(p)
+        # Price Y1 = 100. Y2 = 112.
+        # Rev Y1 = 1200 * 100 = 120000.
+        # Rev Y2 = 1200 * 112 = 134400.
+    
+        # Month mode
+        p.granularity = "Month"
+>       res_m = calculate_financials(p)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+
+feasibility_app\tests\test_granularity.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+model = ProjectModel(id='5e16b5ee-18ad-41e0-a06e-19d5cbaf8adf', name='New Feasibility Project', created_at=datetime.datetime(2...iscount_rate_unlevered=0.2, discount_rate_levered=0.25, calculation_mode='Unlevered', terminal_debt_treatment='payoff')
+
+    def calculate_financials(model: ProjectModel) -> FinancialResults:
+        horizon = model.horizon_years
+        pp_year = 12 if model.granularity == "Month" else 1
+        total_periods = horizon * pp_year
+    
+        # Years labels for Monthly would be dates or 1..12?
+        # For reporting (Annual), we just stick to 1..Horizon.
+        # The output 'years' list will be Annual for simplicity in chart x-axis unless monthly.
+        years = list(range(1, horizon + 1))
+    
+        # 1. Revenue & OPEX
+        revenue = np.zeros(total_periods)
+        cogs = np.zeros(total_periods)
+    
+        for prod in model.products:
+            # Initial annual figures
+            annual_vol = prod.initial_volume
+            unit_price = prod.unit_price
+            unit_cost = prod.unit_cost
+    
+            # Per period figures
+            period_vol = annual_vol / pp_year
+    
+            # Effective period growth rates
+            # (1 + r_annual) = (1 + r_period)^pp
+            # r_period = (1 + r_annual)^(1/pp) - 1
+            vol_growth_p = (1 + prod.year_growth_rate) ** (1.0 / pp_year) - 1
+            price_growth_p = (1 + prod.price_escalation_rate) ** (1.0 / pp_year) - 1
+            cost_growth_p = (1 + prod.cost_escalation_rate) ** (1.0 / pp_year) - 1
+    
+            for i in range(total_periods):
+                revenue[i] += period_vol * unit_price
+                cogs[i] += period_vol * unit_cost
+    
+                # Growth each period
+                period_vol *= (1 + vol_growth_p)
+                unit_price *= (1 + price_growth_p)
+                unit_cost *= (1 + cost_growth_p)
+    
+        gross_profit = revenue - cogs
+    
+        opex = np.zeros(total_periods)
+        # Fixed Expenses
+        for exp in model.fixed_expenses:
+            annual_amount = exp.amount_per_year
+            period_amount = annual_amount / pp_year
+            rate_p = (1 + exp.growth_rate) ** (1.0 / pp_year) - 1
+    
+            for i in range(total_periods):
+                opex[i] += period_amount
+                period_amount *= (1 + rate_p)
+    
+        # Personnel
+        for pers in model.personnel:
+            # Annual cost = count * monthly * 12 * (1+tax)
+            total_annual_cost = pers.count * pers.monthly_gross_salary * 12 * (1 + pers.sgk_tax_rate)
+            # Period cost
+            period_cost = total_annual_cost / pp_year
+    
+            rate_p = (1 + pers.yearly_raise_rate) ** (1.0 / pp_year) - 1
+    
+            # Start period
+            start_idx = (pers.start_year - 1) * pp_year
+    
+            for i in range(total_periods):
+                if i >= start_idx:
+                    opex[i] += period_cost
+                    period_cost *= (1 + rate_p)
+    
+        ebitda = gross_profit - opex
+    
+        # 2. CAPEX & Depreciation
+        total_capex_flow = np.zeros(total_periods)
+        dep_base_items = []
+    
+        # Flags
+        vat_exempt = model.tax_config.vat_exemption
+    
+        for item in model.capex_items:
+            # Determine period index
+            if pp_year == 12:
+                # Assume item.month is 1-based (1..12). Defaults to 1.
+                m = item.month if 1 <= item.month <= 12 else 1
+                idx = (item.year - 1) * pp_year + (m - 1)
+            else:
+                idx = item.year - 1
+    
+            if 0 <= idx < total_periods:
+                base_amount = item.amount
+    
+                # Customs Duty
+                customs_cost = 0.0
+                if item.is_imported:
+                    customs_cost = base_amount * item.customs_duty_rate
+    
+                # VAT
+                vat_cost = 0.0
+                if not vat_exempt:
+                    vat_base = base_amount + customs_cost
+                    vat_cost = vat_base * item.vat_rate
+    
+                total_outflow = base_amount + customs_cost + vat_cost
+                total_capex_flow[idx] += total_outflow
+    
+                # Depreciation Base
+                dep_item = item.copy()
+                dep_item.amount = base_amount + customs_cost
+                dep_base_items.append(dep_item)
+    
+        # 3. Grants (Incentives)
+        grant_income_taxable = np.zeros(total_periods)
+        grant_cash_inflow = np.zeros(total_periods)
+    
+        for grant in model.grants:
+            # Grants usually per year? Or specific year.
+            # Assume Year 1 means start of Year 1.
+            idx = (grant.year - 1) * pp_year
+            if 0 <= idx < total_periods:
+                grant_cash_inflow[idx] += grant.amount
+                if not grant.is_capex_reduction:
+                    grant_income_taxable[idx] += grant.amount
+                else:
+                    pass
+    
+        # Calculate Depreciation (Initial)
+        dep_amort = depreciation.aggregate_depreciation(
+            dep_base_items,
+            horizon,
+            model.tax_config.machinery_useful_life,
+            model.tax_config.building_useful_life,
+            payments_per_year=pp_year
+        )
+    
+        # Adjust Depreciation for Grants
+        total_capex_reduction_grants = sum(g.amount for g in model.grants if g.is_capex_reduction)
+        if total_capex_reduction_grants > 0:
+            avg_life_periods = ((model.tax_config.machinery_useful_life + model.tax_config.building_useful_life) / 2) * pp_year
+            period_dep_reduction = total_capex_reduction_grants / avg_life_periods
+            # DEBUG
+            # print(f"DEBUG: dep_amort shape {dep_amort.shape}, period_dep_reduction {period_dep_reduction}")
+            dep_amort = np.maximum(0, dep_amort - period_dep_reduction)
+    
+        # 4. Finance (Loans & Leasing)
+        interest_expense = np.zeros(total_periods)
+        principal_payment = np.zeros(total_periods)
+        debt_drawdown = np.zeros(total_periods)
+    
+        # Loans
+        for loan in model.loans:
+            schedule = finance.calculate_loan_schedule(
+                loan.amount,
+                loan.interest_rate,
+                loan.term_years,
+                loan.payment_method,
+                loan.start_year,
+                horizon,
+                loan.grace_period_years,
+                payments_per_year=pp_year
+            )
+            interest_expense += schedule["interest"]
+            principal_payment += schedule["principal"]
+            debt_drawdown += schedule["drawdown"]
+    
+        # Leasing (Finance Lease Logic)
+        leasing_interest = np.zeros(total_periods)
+        leasing_principal = np.zeros(total_periods)
+        leasing_downpayment = np.zeros(total_periods)
+    
+        for lease in model.leasings:
+            # Asset Side: Depreciate
+            lease_life_periods = model.tax_config.machinery_useful_life * pp_year
+            period_dep = lease.asset_value / lease_life_periods
+    
+            for i in range(min(total_periods, lease_life_periods)):
+                dep_amort[i] += period_dep
+    
+            # Liability Side: Schedule
+            if lease.down_payment > 0:
+                leasing_downpayment[0] += lease.down_payment
+    
+            financed_amt = lease.asset_value - lease.down_payment
+            schedule = finance.calculate_loan_schedule(
+                financed_amt,
+                lease.annual_interest_rate,
+                lease.term_years,
+                "EqualPayment",
+                1, # Start Year 1
+                horizon,
+                0,
+                payments_per_year=pp_year
+            )
+            leasing_interest += schedule["interest"]
+            leasing_principal += schedule["principal"]
+    
+        total_interest = interest_expense + leasing_interest
+    
+        # EBIT (Operating) calculation
+        # Grant taxable income is typically "Other Income" below EBITDA
+        ebit = ebitda - dep_amort
+    
+        # EBT
+        ebt = ebit - total_interest + grant_income_taxable
+    
+        # 5. Tax (Loss Carryforward)
+        tax_payment = np.zeros(total_periods)
+        accumulated_loss = 0.0
+    
+        for i in range(total_periods):
+            ebt_curr = ebt[i]
+    
+            if ebt_curr < 0:
+                tax_payment[i] = 0.0
+                accumulated_loss += abs(ebt_curr)
+            else:
+                loss_usage = min(ebt_curr, accumulated_loss)
+                taxable_base = ebt_curr - loss_usage
+    
+                tax_payment[i] = taxable_base * model.tax_config.corporate_tax_rate
+                accumulated_loss -= loss_usage
+    
+        net_income = ebt - tax_payment
+    
+        # 6. Working Capital
+        nwc_res = nwc.calculate_nwc(
+            revenue, cogs, opex,
+            model.nwc_config.dso,
+            model.nwc_config.dio,
+            model.nwc_config.dpo,
+            periods_per_year=pp_year
+        )
+        delta_nwc = nwc_res["delta_nwc"]
+    
+        # 7. Terminal Debt Treatment
+        ending_debt = 0.0
+    
+        # Calculate ending debt balance
+        total_debt_balance_arr = np.zeros(total_periods)
+        for loan in model.loans:
+            schedule = finance.calculate_loan_schedule(
+                loan.amount, loan.interest_rate, loan.term_years, loan.payment_method, loan.start_year, horizon, loan.grace_period_years, payments_per_year=pp_year
+            )
+            total_debt_balance_arr += schedule["balance"]
+    
+        for lease in model.leasings:
+            financed_amt = lease.asset_value - lease.down_payment
+            schedule = finance.calculate_loan_schedule(
+                financed_amt, lease.annual_interest_rate, lease.term_years, "EqualPayment", 1, horizon, 0, payments_per_year=pp_year
+            )
+            total_debt_balance_arr += schedule["balance"]
+    
+        ending_debt = total_debt_balance_arr[-1]
+        terminal_payoff_amount = 0.0
+    
+        if ending_debt > 1.0: # Tolerance
+            if model.terminal_debt_treatment == "payoff" and model.calculation_mode == "Levered":
+                terminal_payoff_amount = ending_debt
+                principal_payment[-1] += terminal_payoff_amount
+                ending_debt = 0.0
+    
+        # 8. Cash Flow Construction
+    
+        # Levered (FCFE)
+        fcfe = (net_income
+                + dep_amort
+                - delta_nwc
+                - total_capex_flow
+                - leasing_downpayment
+                + debt_drawdown
+                - principal_payment
+                - leasing_principal
+                + grant_cash_inflow)
+    
+        # FCFF
+        nopat = (ebitda - dep_amort + grant_income_taxable) * (1 - model.tax_config.corporate_tax_rate)
+    
+        fcff = (nopat
+                + dep_amort
+                - delta_nwc
+                - total_capex_flow
+                - leasing_downpayment
+                + grant_cash_inflow)
+    
+        if model.nwc_config.terminal_release:
+            term_balance = nwc_res["nwc_balance"][-1] if len(nwc_res["nwc_balance"]) > 0 else 0
+            fcfe[-1] += term_balance
+            fcff[-1] += term_balance
+    
+        # --- Aggregation for Reporting & Metrics ---
+        # We aggregate everything to Annual for consistent output and metrics calculation
+    
+        def aggr_sum(arr):
+            if pp_year == 1: return arr
+            return arr.reshape(-1, pp_year).sum(axis=1)
+    
+        def aggr_last(arr):
+            if pp_year == 1: return arr
+            return arr.reshape(-1, pp_year)[:, -1]
+    
+        rev_a = aggr_sum(revenue)
+        cogs_a = aggr_sum(cogs)
+        opex_a = aggr_sum(opex)
+        ebitda_a = aggr_sum(ebitda)
+        dep_a = aggr_sum(dep_amort)
+        grant_inc_a = aggr_sum(grant_income_taxable)
+        interest_a = aggr_sum(total_interest)
+        ebt_a = aggr_sum(ebt)
+        tax_a = aggr_sum(tax_payment)
+        ni_a = aggr_sum(net_income)
+    
+        nwc_delta_a = aggr_sum(delta_nwc)
+    
+        capex_a = aggr_sum(total_capex_flow)
+        lease_down_a = aggr_sum(leasing_downpayment)
+        draw_a = aggr_sum(debt_drawdown)
+        princ_a = aggr_sum(principal_payment)
+        lease_princ_a = aggr_sum(leasing_principal)
+        grant_cash_a = aggr_sum(grant_cash_inflow)
+        fcfe_a = aggr_sum(fcfe)
+        fcff_a = aggr_sum(fcff)
+    
+        # 9. Metrics (on Annual Flows)
+        if model.calculation_mode == "Unlevered":
+            target_stream = fcff_a
+            initial_invest = 0.0
+            discount_rate = model.discount_rate_unlevered
+        else:
+            target_stream = fcfe_a
+            initial_invest = model.equity_contribution
+            discount_rate = model.discount_rate_levered
+    
+        full_cash_flows = np.insert(target_stream, 0, -initial_invest)
+        metrics = finance.calculate_metrics(full_cash_flows, discount_rate)
+    
+        # --- DSCR Calculation (Annual) ---
+        # Cash Flow Available for Debt Service (CFADS)
+        # Approx: EBITDA - Tax - NWC Change - CAPEX + Grant Cash
+        # Note: CAPEX is usually strictly maintenance for DSCR, but here we take total.
+        # Note: Tax is "Tax Paid".
+        cfads = ebitda_a - tax_a - nwc_delta_a - capex_a + grant_cash_a
+>       debt_service = princ_a + interest_a + lease_princ_a + (leasing_interest if 'leasing_interest' in locals() else 0)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       ValueError: operands could not be broadcast together with shapes (3,) (36,)
+
+feasibility_app\core\engine.py:360: ValueError
+=========================== short test summary info ===========================
+FAILED feasibility_app/tests/test_granularity.py::test_granularity_comparison - ValueError: operands could not be broadcast together with shapes (3,) (36,)
+FAILED feasibility_app/tests/test_granularity.py::test_loan_monthly_schedule - ValueError: operands could not be broadcast together with shapes (3,) (36,)
+FAILED feasibility_app/tests/test_granularity.py::test_compounding_growth - ValueError: operands could not be broadcast together with shapes (3,) (36,)
+============================== 3 failed in 1.22s ==============================
