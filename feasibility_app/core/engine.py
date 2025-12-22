@@ -103,8 +103,47 @@ def calculate_financials(model: ProjectModel) -> FinancialResults:
             unit_price *= (1 + price_growth_p)
             unit_cost *= (1 + cost_growth_p)
             
+            # Growth
+            period_demand_vol *= (1 + vol_growth_p)
+            unit_price *= (1 + price_growth_p)
+            unit_cost *= (1 + cost_growth_p)
+            
     gross_profit = revenue - cogs
     
+    # --- SCALABLE PERSONNEL PRE-CALCULATION ---
+    # We need aggregated actual sales volume per period to determine scaling factor.
+    # Re-looping products to sum up actual volumes for Ratio.
+    # Note: Ideally we could have summed this inside the loop above.
+    # Let's do a quick pass or optimized way. For now, separate pass for clarity is fine or we can reconstruct.
+    # Actually, we didn't store per-period volume for all products in an array.
+    # Let's refactor the Revenue loop slightly to store 'total_sales_vol_by_period'
+    
+    # RE-RUN for Volume Index (Fast enough)
+    total_sales_vol_by_period = np.zeros(total_periods)
+    total_initial_vol = sum(p.initial_volume for p in model.products)
+    
+    if total_initial_vol > 0:
+        for prod in model.products:
+            # Re-simulate volume logic (identical to above)
+            p_dem = prod.initial_volume / pp_year
+            vol_g = (1 + prod.year_growth_rate) ** (1.0 / pp_year) - 1
+            p_cap = prod.production_capacity_per_year / pp_year
+            
+            for i in range(total_periods):
+                gross = p_dem / (1 - prod.scrap_rate) if prod.scrap_rate < 1 else p_dem
+                max_g = p_cap * prod.oee_percent
+                act_g = min(gross, max_g)
+                act_sales = act_g * (1 - prod.scrap_rate)
+                total_sales_vol_by_period[i] += act_sales
+                p_dem *= (1 + vol_g)
+        
+        # Calculate Ratio
+        # Initial Period Volume (Theoretical) = Total_Initial / pp_year
+        base_period_vol = total_initial_vol / pp_year
+        volume_scale_ratio = total_sales_vol_by_period / base_period_vol
+    else:
+        volume_scale_ratio = np.ones(total_periods)
+
     opex = np.zeros(total_periods)
     # Fixed Expenses
     for exp in model.fixed_expenses:
@@ -122,10 +161,10 @@ def calculate_financials(model: ProjectModel) -> FinancialResults:
     for pers in model.personnel:
         fx = get_fx_multiplier(pers.currency)
         
-        # Annual cost = count * monthly * 12 * (1+tax)
-        total_annual_cost = pers.count * (pers.monthly_gross_salary * fx) * 12 * (1 + pers.sgk_tax_rate)
-        # Period cost
-        period_cost = total_annual_cost / pp_year
+        # Base Cost per person (Annual)
+        base_annual_cost_per_person = (pers.monthly_gross_salary * fx) * 12 * (1 + pers.sgk_tax_rate)
+        # Period cost per person
+        period_cost_per_person = base_annual_cost_per_person / pp_year
         
         rate_p = (1 + pers.yearly_raise_rate) ** (1.0 / pp_year) - 1
         
@@ -134,8 +173,16 @@ def calculate_financials(model: ProjectModel) -> FinancialResults:
         
         for i in range(total_periods):
             if i >= start_idx:
-                opex[i] += period_cost
-                period_cost *= (1 + rate_p)
+                # Determine Headcount
+                count = pers.count
+                if pers.is_scalable:
+                    count = pers.count * volume_scale_ratio[i]
+                
+                total_cost = count * period_cost_per_person
+                opex[i] += total_cost
+                
+                # Apply Raise to Unit Cost
+                period_cost_per_person *= (1 + rate_p)
                 
     ebitda = gross_profit - opex
     

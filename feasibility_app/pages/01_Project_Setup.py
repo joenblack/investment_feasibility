@@ -48,7 +48,12 @@ st.session_state.project.calculation_mode = st.radio(
     index=0 if st.session_state.project.calculation_mode == "Unlevered" else 1, 
     format_func=lambda x: mode_map[x],
     help=f"{t('unlevered_help')}\n{t('levered_help')}"
+    help=f"{t('unlevered_help')}\n{t('levered_help')}"
 )
+
+# Valuation Method Explanation
+st.info(t("calc_mode_explanation"))
+
 # Discount Rates
 with c2:
     st.subheader(t("discount_settings"))

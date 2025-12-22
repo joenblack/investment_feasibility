@@ -8,7 +8,9 @@ bootstrap(require_project=True)
 sidebar_nav()
 
 st.title(t("capex_title"))
-st.info(t("capex_info"))
+st.title(t("capex_title"))
+# st.info(t("capex_info")) # Replace simple info with detailed logic explanation
+st.info(t("capex_flow_explanation"))
 
 # Add New Item Form
 with st.expander(t("add_new_capex"), expanded=False):
@@ -70,7 +72,9 @@ st.divider()
 
 # --- Incentives / Grants ---
 from core.model import Grant
+from core.model import Grant
 st.header(t("incentives_title"))
+st.info(t("grant_type_explanation"))
 
 with st.expander(t("inc_add"), expanded=False):
     c1, c2 = st.columns(2)

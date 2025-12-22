@@ -27,7 +27,10 @@ results = calculate_financials(st.session_state.project)
 # Metric Columns
 c1, c2, c3, c4 = st.columns(4)
 
-c1.metric("NPV", format_currency(results.kpi['npv'], st.session_state.project.currency_base), help=t("npv_help"))
+# Determine NPV Label (Equity vs Firm)
+npv_basis_label = t("npv_basis_equity") if st.session_state.project.calculation_mode == "Levered" else t("npv_basis_firm")
+
+c1.metric(f"NPV ({npv_basis_label})", format_currency(results.kpi['npv'], st.session_state.project.currency_base), help=t("npv_help"))
 c2.metric("IRR", f"{results.kpi['irr']*100:.2f}%", help=t("irr_help"))
 c3.metric("Payback", f"{results.kpi['payback']:.1f} " + t("year"), help=t("payback_help"))
 # Placeholder for DSCR - will update engine next

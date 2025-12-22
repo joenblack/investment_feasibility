@@ -11,6 +11,7 @@ from core.db import list_projects, load_project, delete_project
 from core.auth import logout, check_permission
 from core.model import ProjectModel
 from core.engine import calculate_financials
+from core.insights import generate_insights
 import plotly.express as px
 import plotly.graph_objects as go
 
@@ -126,14 +127,30 @@ if st.session_state.project and st.session_state.project.id:
         
         fmt_currency = st.session_state.project.currency_base
         
+        # Determine NPV Label (Equity vs Firm)
+        npv_basis_label = t("npv_basis_equity") if st.session_state.project.calculation_mode == "Levered" else t("npv_basis_firm")
+        
         with c1:
-            st.metric(t("npv_label"), f"{kpi.get('npv', 0):,.0f} {fmt_currency}", help=t("npv_help"))
+            st.metric(f"{t('npv_label')} ({npv_basis_label})", f"{kpi.get('npv', 0):,.0f} {fmt_currency}", help=t("npv_help"))
         with c2:
             st.metric(t("irr_label"), f"{kpi.get('irr', 0) * 100:.1f} %", help=t("irr_help"))
         with c3:
             st.metric(t("roi"), f"{kpi.get('roi', 0):.1f} %", help=t("roi_help"))
         with c4:
             st.metric(t("payback_period"), f"{kpi.get('payback', 0):.1f}", help=t("payback_help"))
+            
+        # --- SMART INSIGHTS ---
+        insights_list = generate_insights(st.session_state.project, results)
+        if insights_list:
+            with st.expander(t("insights_title"), expanded=True):
+                for insight in insights_list:
+                    msg = t(insight["message_key"]).format(**insight["params"])
+                    if insight["type"] == "warning":
+                        st.warning(msg, icon="⚠️")
+                    elif insight["type"] == "info":
+                        st.info(msg, icon="ℹ️")
+                    else:
+                        st.success(msg)
             
         st.divider()
         

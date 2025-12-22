@@ -181,6 +181,11 @@ with tab1:
 
 with tab2:
     st.subheader(t("tab_fixed_exp"))
+    
+    # OPEX Clarity
+    with st.expander(t("opex_info_title"), expanded=False):
+        st.info(t("opex_explanation"))
+
     with st.expander(t("add_expense")):
         c1, c2, c3 = st.columns(3)
         e_name = c1.text_input(t("expense_name"))
@@ -214,16 +219,23 @@ with tab3:
         start_y = c5.number_input(t("start_year"), 1, st.session_state.project.horizon_years, 1)
         raise_r = c6.number_input(t("annual_raise"), 0.0)
         
+        # Scaling Option
+        is_scalable = st.checkbox(t("is_scalable_label"), help=t("is_scalable_help"))
+        if is_scalable:
+            st.caption(t("scalable_logic_explanation"))
+        
         if st.button(t("add_personnel")):
             pers = Personnel(
                 role=role, count=count, monthly_gross_salary=salary,
-                sgk_tax_rate=sgk/100.0, start_year=start_y, yearly_raise_rate=raise_r/100.0
+                sgk_tax_rate=sgk/100.0, start_year=start_y, yearly_raise_rate=raise_r/100.0,
+                is_scalable=is_scalable
             )
             st.session_state.project.personnel.append(pers)
             st.rerun()
 
     for i, p in enumerate(st.session_state.project.personnel):
-        st.write(f"{p.count}x {p.role} | {p.monthly_gross_salary}/m")
+        scale_tag = " (Scalable)" if p.is_scalable else ""
+        st.write(f"{p.count}x {p.role}{scale_tag} | {p.monthly_gross_salary}/m")
         if st.button(t("remove") + f" {p.role}", key=f"del_pers_{i}"):
             st.session_state.project.personnel.pop(i)
             st.rerun()

@@ -262,6 +262,35 @@ TRANSLATIONS = {
         "avg_revenue_help": "Average annual revenue calculated over the entire project horizon.",
         "avg_ebitda_help": "EBITDA: Earnings Before Interest, Taxes, Depreciation, and Amortization. Measures operational profitability.",
         "avg_margin_help": "Average EBITDA Margin (EBITDA / Revenue) over the horizon.",
+        "avg_margin_help": "Average EBITDA Margin (EBITDA / Revenue) over the horizon.",
+        
+        "is_scalable_label": "Scalable with Volume?",
+        "is_scalable_help": "If checked, headcount updates automatically based on total production volume ratio.",
+        "scalable_logic_explanation": "ℹ️ **Logic:** (Initial Count) x (Current Total Volume / Initial Volume). E.g., if volume increases by 50%, headcount increases by 50%.",
+        "opex_info_title": "ℹ️ Operational Expenses (OPEX)",
+        "opex_info_title": "ℹ️ Operational Expenses (OPEX)",
+        "opex_explanation": "Fixed Expenses added here are deducted from **Gross Profit** to calculate **EBITDA**. These are treated as direct Cash Outflows.",
+        
+        "capex_flow_explanation": "ℹ️ **CAPEX Logic:** Investments entered here do not reduce EBITDA directly. They are capitalized and expensed over time via **Depreciation** (impacting EBIT). However, they reduce Cash Flow immediately (including VAT) in the investment period.",
+        "grant_type_explanation": "ℹ️ **Incentive Types:**\n\n* **Capex Reduction:** Reduces the investment cost base, leading to lower depreciation and tax shield. Provides immediate cash inflow.\n* **Operational Support:** Treated as direct income (taxable). Provides immediate cash inflow.",
+        
+        "calc_mode_explanation": "ℹ️ **Valuation Method:**\n\n* **Unlevered (FCFF) - Firm Value:** Independent of debt structure. Interest and principal payments are NOT deducted. Discount rate: **WACC**.\n* **Levered (FCFE) - Equity Value:** Cash remaining for shareholders. Debt payments ARE deducted. Discount rate: **Cost of Equity**.",
+        "npv_basis_equity": "Basis: Equity",
+        "npv_basis_firm": "Basis: Firm",
+        
+        "tv_growth_error": "⚠️ **Error:** Growth Rate ({g:.1f}%) cannot be greater than or equal to Discount Rate ({r:.1f}%). This implies infinite value. Please reduce growth rate.",
+        "tv_assumption_warning": "⚠️ **Warning:** Growth rates above 3% are often considered aggressive and above long-term inflation.",
+        
+        "risk_decision_title": "🛡️ Decision Support & Risk Summary",
+        "prob_loss_msg": "📉 **Probability of Loss (NPV < 0):** {prob:.1f}%",
+        "var_msg": "⚠️ **Value at Risk (VaR 95%):** In the worst 5% of cases, losses will exceed **{amy}**.",
+        "dist_explanation": "ℹ️ **Distributions:**\n\n* **Normal:** Standard uncertainties (Inflation etc.).\n* **Triangular:** Estimates with known min/max bounds (Construction cost etc.).",
+        
+        "insights_title": "💡 Smart Insights",
+        "insight_tv_dominance": "⚠️ **TV Dominance:** %{ratio:.0f} of NPV comes from Terminal Value. Highly sensitive to exit assumptions.",
+        "insight_low_oee": "ℹ️ **Low Efficiency:** OEE is below 60% for ({products}). Capacity is underutilized.",
+        "insight_high_opex": "⚠️ **High OPEX Burden:** Gross Margin is healthy, but fixed costs are eroding EBITDA.",
+        "insight_nwc_squeeze": "⚠️ **Cash Squeeze:** Working Capital needs ({pct:.0f}%) are consuming a large portion of EBITDA. Consider reducing DSO.",
     },
     "tr": {
         # Sidebar
@@ -650,6 +679,35 @@ TRANSLATIONS = {
         "avg_revenue_help": "Projenin tüm vadesi boyunca hesaplanan yıllık ortalama gelir.",
         "avg_ebitda_help": "FAVÖK (EBITDA): Faiz, Amortisman ve Vergi Öncesi Kar. İşletmenin operasyonel karlılığını gösterir.",
         "avg_margin_help": "Projenin ortalama FAVÖK Marjı (FAVÖK / Gelir).",
+        "avg_margin_help": "Projenin ortalama FAVÖK Marjı (FAVÖK / Gelir).",
+        
+        "is_scalable_label": "Hacimle Orantılı (Scalable)?",
+        "is_scalable_help": "İşaretlenirse, personel sayısı toplam üretim hacmindeki artış/azalış oranına göre her yıl otomatik güncellenir.",
+        "scalable_logic_explanation": "ℹ️ **Hesaplama Mantığı:** (Başlangıç Personel Sayısı) x (O Yılki Toplam Hacim / Başlangıç Hacmi). Örn: Üretim hacmi %50 artarsa, personel sayısı da %50 artar.",
+        "opex_info_title": "ℹ️ Operasyonel Giderler (OPEX)",
+        "opex_info_title": "ℹ️ Operasyonel Giderler (OPEX)",
+        "opex_explanation": "Buraya eklenen Sabit Giderler, **Brüt Kar**'dan düşülerek **FAVÖK** (EBITDA) değerini oluşturur. Bu giderler doğrudan nakit çıkışı (Cash Outflow) olarak kabul edilir.",
+        
+        "capex_flow_explanation": "ℹ️ **CAPEX Mantığı:** Buraya girilen yatırım harcamaları (Makine, İnşaat vb.) doğrudan FAVÖK'ü düşürmez. Varlık olarak bilançoya eklenir ve **Amortisman** yoluyla yıllara yayılarak giderleşir (EBIT'i etkiler). Ancak Nakit Akışını (Cash Flow) yatırım yapıldığı dönemde (KDV dahil) azaltır.",
+        "grant_type_explanation": "ℹ️ **Teşvik Türleri:**\n\n* **Yatırım Teşviki (Capex Reduction):** Yatırım maliyetini düşürür. Bu sayede amortisman tabanı küçülür, dolayısıyla daha az amortisman gideri ve daha az vergi kalkanı oluşur. Nakit girişi sağlar.\n* **İşletme Desteği (Opex/Cash):** Doğrudan gelir tablosuna (Diğer Gelirler) dahil edilir ve vergiye tabidir. Nakit girişi sağlar.",
+        
+        "calc_mode_explanation": "ℹ️ **Değerleme Yöntemi:**\n\n* **Unlevered (FCFF) - Firma Değeri:** Borç yapısından bağımsızdır. Faiz ve anapara ödemeleri nakit akışından düşülmez. İskonto oranı olarak **WACC** kullanılır.\n* **Levered (FCFE) - Özkaynak Değeri:** Hissedara kalan nakittir. Borç ödemeleri düşülür. İskonto oranı olarak **Özkaynak Maliyeti** kullanılır.",
+        "npv_basis_equity": "Baz: Özkaynak (Equity)",
+        "npv_basis_firm": "Baz: Firma (Firm)",
+        
+        "tv_growth_error": "⚠️ **Hata:** Büyüme Oranı (%{g:.1f}), İskonto Oranından (%{r:.1f}) büyük veya eşit olamaz. Bu durum sonsuz değer üretir. Lütfen büyüme oranını düşürün.",
+        "tv_assumption_warning": "⚠️ **Uyarı:** %3 üzeri büyüme oranları genellikle enflasyonun üzerinde kabul edilir ve riskli bulunabilir.",
+        
+        "risk_decision_title": "🛡️ Karar Destek & Risk Özeti",
+        "prob_loss_msg": "📉 **Zarar Etme Olasılığı (NPV < 0):** %{prob:.1f}",
+        "var_msg": "⚠️ **Riske Maruz Değer (VaR 95%):** En kötü %5 senaryoda zarar en az **{amy}** olacak.",
+        "dist_explanation": "ℹ️ **Dağılımlar:**\n\n* **Normal:** Standart belirsizlikler (Enflasyon vb.) için uygundur.\n* **Üçgen (Triangular):** Alt ve üst sınırları tecrübeyle bilinen tahminler (İnşaat maliyeti vb.) için uygundur.",
+        
+        "insights_title": "💡 Akıllı Analiz (Insights)",
+        "insight_tv_dominance": "⚠️ **Terminal Değer Baskınlığı:** Proje değerinin (NPV) %{ratio:.0f}'i Terminal Değer'den geliyor. Çıkış çarpanı veya büyüme varsayımlarına karşı çok hassas.",
+        "insight_low_oee": "ℹ️ **Düşük Verimlilik:** ({products}) için OEE %60'ın altında. Üretim kapasitesi tam kullanılmıyor, birim maliyetler yüksek olabilir.",
+        "insight_high_opex": "⚠️ **Yüksek Sabit Giderler:** Brüt Karlılık sağlıklı olsa da, OPEX/Personel giderleri operasyonel karı (FAVÖK) eritiyor.",
+        "insight_nwc_squeeze": "⚠️ **Nakit Sıkışması:** İşletme Sermayesi ihtiyacı (%{pct:.0f}), operasyonel karın büyük kısmını tüketiyor. Tahsilat vadelerini (DSO) düşürmeyi düşünün.",
     },
 }
 

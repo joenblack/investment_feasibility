@@ -63,7 +63,9 @@ class Personnel(BaseModel):
     currency: CurrencyType = "TRY"
     yearly_raise_rate: float = 0.0
     sgk_tax_rate: float = 0.22 # Employer burden
+    sgk_tax_rate: float = 0.22 # Employer burden
     start_year: int = 1
+    is_scalable: bool = False # If true, count scales with Global Volume Growth
 
 class Loan(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))

@@ -79,6 +79,9 @@ with tab_mc_setup:
         value=st.session_state.project.risk_config.monte_carlo_iterations
     )
     st.session_state.project.risk_config.random_seed = c2.number_input(t("random_seed"), value=42)
+
+    # Distribution Info
+    st.info(t("dist_explanation"))
     
     st.markdown(f"### {t('variable_config')}")
     vars_to_config = ["Volume", "Price", "CAPEX", "OPEX"]
@@ -142,8 +145,28 @@ with tab_mc_res:
         col1, col2, col3, col4 = st.columns(4)
         col1.metric(t("mean_npv"), f"{mean_npv:,.0f}")
         col2.metric(t("prob_profit"), f"{prob_profit:.1f}%")
-        col3.metric(t("var_95"), f"{var_95:,.0f}", delta_color="inverse")
+        col3.metric(t("var_95"), f"{p5:,.0f}", delta_color="inverse", help=t("var_95_help") if "var_95_help" in t("var_95") else "") # p5 is the value at 5th percentile, not difference
         col4.metric(t("std_dev"), f"{std_npv:,.0f}")
+        
+        # --- DECISION SUPPORT CARD ---
+        st.divider()
+        st.subheader(t("risk_decision_title"))
+        
+        prob_loss = (df['NPV'] < 0).mean() * 100
+        # VaR Amount (Absolute Loss from Mean or just the Value?)
+        # Convention: VaR is the generic "Worst Case Value" or "Loss Amount".
+        # Let's show the Value at 5% percentile.
+        worst_case_val = p5
+        
+        c_d1, c_d2 = st.columns([1, 1])
+        with c_d1:
+            if prob_loss > 0:
+                st.error(t("prob_loss_msg").format(prob=prob_loss))
+            else:
+                st.success(t("prob_loss_msg").format(prob=0.0))
+                
+        with c_d2:
+            st.warning(t("var_msg").format(amy=f"{worst_case_val:,.0f}"))
         
         # Advanced Histogram
         fig = go.Figure()
