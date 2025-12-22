@@ -257,6 +257,11 @@ TRANSLATIONS = {
         
         "initial_equity_help": "Direct cash equity injected at the start of the project (Non-debt funding).",
         "terminal_treatment_help": "How to handle remaining debt at the end of the horizon (Payoff vs Refinance).",
+        "roi_help": "Return on Investment: (Total Net Profit / Total Investment) * 100.",
+        
+        "avg_revenue_help": "Average annual revenue calculated over the entire project horizon.",
+        "avg_ebitda_help": "Average annual EBITDA calculated over the entire project horizon.",
+        "avg_margin_help": "Average EBITDA Margin (EBITDA / Revenue) over the horizon.",
     },
     "tr": {
         # Sidebar
@@ -640,6 +645,11 @@ TRANSLATIONS = {
         
         "initial_equity_help": "Proje başında işletme tarafından konulan doğrudan nakit sermaye (Kredi dışı fonlama).",
         "terminal_treatment_help": "Proje vadesi bittiğinde kalan kredi borcunun ne yapılacağı (Kapatma veya Yeniden Yapılandırma).",
+        "roi_help": "Yatırım Getirisi: (Toplam Net Kar / Toplam Yatırım) * 100.",
+        
+        "avg_revenue_help": "Projenin tüm vadesi boyunca hesaplanan yıllık ortalama gelir.",
+        "avg_ebitda_help": "Projenin tüm vadesi boyunca hesaplanan yıllık ortalama FAVÖK.",
+        "avg_margin_help": "Projenin ortalama FAVÖK Marjı (FAVÖK / Gelir).",
     },
 }
 

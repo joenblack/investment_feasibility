@@ -127,13 +127,13 @@ if st.session_state.project and st.session_state.project.id:
         fmt_currency = st.session_state.project.currency_base
         
         with c1:
-            st.metric(t("npv_label"), f"{kpi.get('npv', 0):,.0f} {fmt_currency}")
+            st.metric(t("npv_label"), f"{kpi.get('npv', 0):,.0f} {fmt_currency}", help=t("npv_help"))
         with c2:
-            st.metric(t("irr_label"), f"{kpi.get('irr', 0) * 100:.1f} %")
+            st.metric(t("irr_label"), f"{kpi.get('irr', 0) * 100:.1f} %", help=t("irr_help"))
         with c3:
-            st.metric(t("roi"), f"{kpi.get('roi', 0):.1f} %")
+            st.metric(t("roi"), f"{kpi.get('roi', 0):.1f} %", help=t("roi_help"))
         with c4:
-            st.metric(t("payback_period"), f"{kpi.get('payback', 0):.1f}")
+            st.metric(t("payback_period"), f"{kpi.get('payback', 0):.1f}", help=t("payback_help"))
             
         st.divider()
         
@@ -167,9 +167,9 @@ if st.session_state.project and st.session_state.project.id:
             avg_ebitda = results.ebitda_arr.mean() if len(results.ebitda_arr) > 0 else 0
             avg_margin = (avg_ebitda / avg_rev * 100) if avg_rev > 0 else 0
             
-            st.write(f"**{t('avg_revenue')}:** {avg_rev:,.0f}")
-            st.write(f"**{t('avg_ebitda')}:** {avg_ebitda:,.0f}")
-            st.write(f"**{t('avg_margin')}:** {avg_margin:.1f}%")
+            st.metric(t("avg_revenue"), f"{avg_rev:,.0f}", help=t("avg_revenue_help"))
+            st.metric(t("avg_ebitda"), f"{avg_ebitda:,.0f}", help=t("avg_ebitda_help"))
+            st.metric(t("avg_margin"), f"{avg_margin:.1f}%", help=t("avg_margin_help"))
             
             st.progress(min(max(avg_margin/100, 0.0), 1.0))
             
