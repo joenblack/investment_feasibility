@@ -26,9 +26,21 @@ with tab1:
     
     # Include ID in the data so we can update existing items
     # SCALING: Convert 0.05 -> 5.0 for user friendly editing
+    from core.quality import check_product_status
+    
+    # Include ID in the data so we can update existing items
+    # SCALING: Convert 0.05 -> 5.0 for user friendly editing
     data = []
+    
+    # 3.1 & 3.4: status computation
     for p in products:
         d = p.model_dump()
+        
+        # Quality Check
+        status_code, status_reason = check_product_status(p)
+        d['status_display'] = status_code # We will display this
+        d['status_reason'] = status_reason # Maybe show as tooltip if possible, or just knowing it.
+        
         # Scale rates
         d['year_growth_rate'] = d.get('year_growth_rate', 0) * 100
         d['price_escalation_rate'] = d.get('price_escalation_rate', 0) * 100
@@ -39,17 +51,23 @@ with tab1:
         data.append(d)
 
     if not data:
+        # Default empty frame needs columns, including status
         df = pd.DataFrame(columns=[
-            "id", "name", "initial_volume", "year_growth_rate", "unit_price", "unit_cost", "currency", 
+            "id", "status_display", "name", "initial_volume", "year_growth_rate", "unit_price", "unit_cost", "currency", 
             "price_escalation_rate", "cost_escalation_rate", 
             "production_capacity_per_year", "oee_percent", "scrap_rate",
-            "advance_payment_pct", "payment_terms_days"
+            "advance_payment_pct", "payment_terms_days", "status_reason"
         ])
     else:
         df = pd.DataFrame(data)
         
+    # 3.2 Required Fields Hint
+    st.info("💡 **A Product is Included only if:** Capacity > 0, OEE% > 0, Volume > 0, Price > 0, Scrap < 100%. Check the **Status** column.")
+
     # Column Config
     cc = {
+        "status_display": st.column_config.TextColumn("Status", disabled=True, width="medium", help="✅ Included / ⛔ Excluded"),
+        "status_reason": st.column_config.TextColumn("Issue", disabled=True, width="large"),
         "name": st.column_config.TextColumn(t("col_prod_name"), required=True),
         "initial_volume": st.column_config.NumberColumn(t("col_vol"), format="%.0f", min_value=0),
         "year_growth_rate": st.column_config.NumberColumn(f"{t('col_vol_growth')} (%)", format="%.2f"),
@@ -72,7 +90,7 @@ with tab1:
         use_container_width=True,
         column_config=cc,
         column_order=[
-            "name", "initial_volume", "unit_price", "unit_cost", "currency", 
+            "status_display", "status_reason", "name", "initial_volume", "unit_price", "unit_cost", "currency", 
             "year_growth_rate", "price_escalation_rate", "cost_escalation_rate",
             "production_capacity_per_year", "oee_percent", "scrap_rate",
             "advance_payment_pct", "payment_terms_days"

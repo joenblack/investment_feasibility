@@ -109,6 +109,34 @@ def sidebar_nav():
     else:
         st.sidebar.warning("⚠️ No Project Active")
 
+    # Data Quality Panel (Global)
+    if st.session_state.get("project_active", False):
+        try:
+            from core.quality import check_input_quality
+            issues = check_input_quality(st.session_state.project)
+            
+            # Count severity
+            errors = [i for i in issues if i['severity'] == 'error']
+            warnings = [i for i in issues if i['severity'] == 'warning']
+            
+            if errors or warnings:
+                with st.sidebar.expander(f"⚠️ Data Quality ({len(errors)} Err, {len(warnings)} Warn)", expanded=bool(errors)):
+                    if errors:
+                        st.markdown("**Blocking Issues:**")
+                        for e in errors:
+                            st.error(f"**{e['context']}**: {e['item']} - {e['issue']}")
+                    if warnings:
+                        st.markdown("**Warnings:**")
+                        for w in warnings:
+                            st.warning(f"**{w['context']}**: {w['item']} - {w['issue']}")
+            else:
+                # Optional: Show 'All Good' if user really wants, but silence is golden typically.
+                # User asked for visibility, maybe a small indicator?
+                # st.sidebar.caption("✅ Data Quality: OK")
+                pass
+        except Exception as e:
+            st.sidebar.error(f"Quality Check Failed: {e}")
+
     
     # Language Selector
     lang_map = {"en": "English", "tr": "Türkçe"}

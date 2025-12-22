@@ -62,3 +62,72 @@ def calculate_data_health(model: ProjectModel, results: FinancialResults) -> Tup
          score -= 5
          
     return max(0, score), warnings
+
+def check_product_status(p) -> Tuple[str, str]:
+    """
+    Returns (Status, Reason) for a product.
+    Status: "✅ Included", "⚠️ Warning", "⛔ Excluded"
+    """
+    # 1. Exclusion Rules (Critical - Zero Revenue)
+    if p.initial_volume <= 0:
+        return "⛔ Excluded", "Initial Volume is 0 or missing."
+    if p.production_capacity_per_year <= 0:
+        return "⛔ Excluded", "Capacity/Year is 0 or missing."
+    if p.oee_percent <= 0:
+        return "⛔ Excluded", "OEE % is 0% or missing."
+    if p.scrap_rate >= 1.0:
+        return "⛔ Excluded", "Scrap Rate >= 100%."
+        
+    # 2. Warning Rules (Revenue is 0 or illogical but processed)
+    if p.unit_price <= 0:
+        return "⚠️ Warning", "Unit Price is 0. Generates no revenue."
+    if p.unit_cost <= 0:
+        return "⚠️ Warning", "Unit Cost is 0. Profit margin may be unrealistic."
+    if p.advance_payment_pct < 0 or p.advance_payment_pct > 1:
+        return "⚠️ Warning", "Advance Payment % should be between 0 and 100."
+        
+    return "✅ Included", "Fully active."
+
+def check_input_quality(model: ProjectModel) -> List[Dict[str, str]]:
+    """
+    Checks static inputs for logical missing/invalid values.
+    Returns list of dicts: {'context': 'CAPEX', 'item': 'Land', 'issue': '...', 'severity': 'error/warning'}
+    """
+    issues = []
+    
+    # 1. Products
+    for p in model.products:
+        status, reason = check_product_status(p)
+        if "⛔" in status:
+            issues.append({'context': 'Revenue', 'item': p.name, 'issue': reason, 'severity': 'error'})
+        elif "⚠️" in status:
+            issues.append({'context': 'Revenue', 'item': p.name, 'issue': reason, 'severity': 'warning'})
+            
+    # 2. CAPEX
+    for c in model.capex_items:
+        if c.amount <= 0:
+            issues.append({'context': 'CAPEX', 'item': c.name, 'issue': 'Amount is 0.', 'severity': 'warning'})
+        if c.year > model.horizon_years:
+            issues.append({'context': 'CAPEX', 'item': c.name, 'issue': f'Year {c.year} is outside horizon ({model.horizon_years}).', 'severity': 'error'})
+            
+    # 3. Personnel
+    for p_item in model.personnel:
+        if p_item.count <= 0:
+             issues.append({'context': 'OPEX', 'item': p_item.role, 'issue': 'Count is 0.', 'severity': 'warning'})
+        if p_item.start_year > model.horizon_years:
+             issues.append({'context': 'OPEX', 'item': p_item.role, 'issue': 'Start Year outside horizon.', 'severity': 'error'})
+
+    # 4. Loans
+    for l in model.loans:
+        if l.amount <= 0:
+            issues.append({'context': 'Finance', 'item': 'Loan', 'issue': 'Amount is 0.', 'severity': 'warning'})
+        if l.start_year > model.horizon_years:
+            issues.append({'context': 'Finance', 'item': 'Loan', 'issue': 'Start Year outside horizon.', 'severity': 'error'})
+        if l.grace_period_years >= l.term_years:
+             issues.append({'context': 'Finance', 'item': 'Loan', 'issue': 'Grace period >= Term.', 'severity': 'error'})
+             
+    # 5. Global Config
+    if model.nwc_config.dso == 0 and model.nwc_config.dpo == 0 and model.nwc_config.dio == 0:
+         issues.append({'context': 'Setup', 'item': 'Working Capital', 'issue': 'All NWC days are 0. Logic check needed?', 'severity': 'info'})
+         
+    return issues
