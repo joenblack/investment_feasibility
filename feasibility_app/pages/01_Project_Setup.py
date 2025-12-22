@@ -48,7 +48,6 @@ st.session_state.project.calculation_mode = st.radio(
     index=0 if st.session_state.project.calculation_mode == "Unlevered" else 1, 
     format_func=lambda x: mode_map[x],
     help=f"{t('unlevered_help')}\n{t('levered_help')}"
-    help=f"{t('unlevered_help')}\n{t('levered_help')}"
 )
 
 # Valuation Method Explanation
@@ -115,6 +114,16 @@ elif tv_method == "ExitMultiple":
     st.session_state.project.tv_config.exit_multiple = mult
 
     st.session_state.project.tv_config.exit_multiple = mult
+    
+# TV Explanation Logic
+if tv_method == "PerpetuityGrowth":
+    g_val = st.session_state.project.tv_config.growth_rate * 100
+    st.info(t("tv_explanation_gordon").format(g=f"{g_val:.1f}"))
+elif tv_method == "ExitMultiple":
+    m_val = st.session_state.project.tv_config.exit_multiple
+    st.info(t("tv_explanation_multiple").format(m=f"{m_val:.1f}"))
+else:
+    st.info(t("tv_explanation_none"))
 
 st.header(t("tax_config"))
 st.session_state.project.tax_config.vat_exemption = st.checkbox(t("vat_exemption_label"), value=st.session_state.project.tax_config.vat_exemption)
