@@ -310,6 +310,8 @@ TRANSLATIONS = {
         "tv_explanation_gordon": "📈 **Perpetuity Growth (Gordon):** Assumes the company grows at a constant rate ({g}%) forever. Suitable for stable cash flows. Formula: `(Last FCF * (1+g)) / (WACC - g)`.",
         "tv_explanation_multiple": "🏢 **Exit Multiple:** Assumes the company is sold based on a market multiple ({m}x) of its final year EBITDA. Suitable for M&A and Private Equity. Formula: `Last Year EBITDA * Multiple`.",
         "tv_explanation_none": "🛑 **No Terminal Value:** Assumes the project is liquidated or has 0 value at the end of the horizon (Year N). Only cash flows within the projection period are considered.",
+        "financial_stmts_title": "Financial Statements",
+        "mode_badge_fcfe": "Mode: Equity (FCFE)",
     },
     "tr": {
         # Sidebar
@@ -744,6 +746,8 @@ TRANSLATIONS = {
         "tv_explanation_gordon": "📈 **Sonsuz Büyüme (Gordon Growth):** Şirketin sonsuza kadar sabit bir hızda ({g}%) büyüyeceği varsayılır. Nakit akışı (FCF) istikrarlı şirketler için uygundur. Formül: `(Son FCF * (1+g)) / (WACC - g)`.",
         "tv_explanation_multiple": "🏢 **Çıkış Çarpanı (Exit Multiple):** Şirketin son yıl FAVÖK (EBITDA) değerinin, piyasa çarpanı ({m}x) ile satılacağı varsayılır. M&A ve özel sermaye projeleri için uygundur. Formül: `Son Yıl FAVÖK * Çarpan`.",
         "tv_explanation_none": "🛑 **Terminal Değer Yok:** Projenin ömrü sonunda (N. yıl) tasfiye edileceği veya değerinin 0 olacağı varsayılır. Sadece projeksiyon dönemindeki nakit akışları dikkate alınır.",
+        "financial_stmts_title": "Finansal Tablolar",
+        "mode_badge_fcfe": "Mod: Hissedar (FCFE)",
     },
 }
 
