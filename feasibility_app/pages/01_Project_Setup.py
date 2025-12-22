@@ -9,7 +9,12 @@ sidebar_nav()
 if st.session_state.get("project_active", False):
     st.title(t("setup_title"))
 else:
-    st.title(t("create_project_title"))
+    st.title(t("project_setup_title"))
+
+# Scope Disclaimer
+st.info(t("ma_scope_disclaimer"))
+
+# 1. Project Metadata
 st.markdown("---")
 
 c1, c2 = st.columns(2)
@@ -48,6 +53,13 @@ st.session_state.project.calculation_mode = st.radio(
     index=0 if st.session_state.project.calculation_mode == "Unlevered" else 1, 
     format_func=lambda x: mode_map[x],
     help=f"{t('unlevered_help')}\n{t('levered_help')}"
+)
+
+# Incremental Mode Toggle
+st.session_state.project.baseline_enabled = st.checkbox(
+    t("baseline_toggle_label"),
+    value=st.session_state.project.baseline_enabled,
+    help=t("baseline_toggle_help")
 )
 
 # Valuation Method Explanation
@@ -105,14 +117,27 @@ if tv_method == "PerpetuityGrowth":
         step=0.1
     )
     st.session_state.project.tv_config.growth_rate = g_rate / 100.0
+    
+    # Validation: g < r
+    mode = st.session_state.project.calculation_mode
+    if mode == "Unlevered":
+        r = st.session_state.project.discount_rate_unlevered
+        r_name = "WACC"
+    else:
+        r = st.session_state.project.discount_rate_levered
+        r_name = "Cost of Equity"
+        
+    if (g_rate / 100.0) >= r:
+        st.error(t("tv_growth_error").format(g=g_rate, r=r*100))
+    elif (g_rate / 100.0) > (r - 0.02):
+        st.warning(f"⚠️ Growth rate is very close to {r_name} ({r*100:.1f}%). Valuation will be extremely high.")
+
 elif tv_method == "ExitMultiple":
     mult = st.number_input(
         t("tv_exit_multiple"), 
         value=st.session_state.project.tv_config.exit_multiple,
         step=0.5
     )
-    st.session_state.project.tv_config.exit_multiple = mult
-
     st.session_state.project.tv_config.exit_multiple = mult
     
 # TV Explanation Logic

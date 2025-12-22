@@ -15,6 +15,76 @@ sidebar_nav()
 st.title(t("scenario_title"))
 
 if st.session_state.project and st.session_state.project.id:
+    # --- SPRINT 2: BASELINE vs INVESTMENT COMPARISON ---
+    if getattr(st.session_state.project, 'baseline_enabled', False):
+        st.subheader(t("growth_analysis_title"))
+        
+        from core.engine import calculate_baseline
+        
+        with st.spinner("Calculating Baseline Scenario..."):
+            res_baseline = calculate_baseline(st.session_state.project)
+            res_current = calculate_financials(st.session_state.project)
+            
+        # Comparison Metrics (Totals for Horizon)
+        # Revenue, EBITDA, Free Cash Flow (Firm or Equity based on mode), NPV
+        
+        def get_total(res, metric_key):
+             if metric_key == "Revenue":
+                 return res.revenue_arr.sum()
+             elif metric_key == "EBITDA":
+                 return res.ebitda_arr.sum()
+             elif metric_key == "Avg EBITDA":
+                 return res.ebitda_arr.mean() if len(res.ebitda_arr) > 0 else 0
+             elif metric_key == "NPV":
+                 return res.kpi.get('npv', 0)
+             elif metric_key == "Net Cash":
+                 # Use Sum of FCF
+                 return res.free_cash_flow.sum()
+             return 0
+             
+        metric_defs = [
+            ("Revenue", t("th_revenue")),
+            ("EBITDA", t("th_ebitda")),
+            ("Avg EBITDA", t("th_avg_ebitda")), # Added New Metric
+            ("Net Cash", t("th_cash_flow")),
+            ("NPV", t("npv_label"))
+        ]
+        data = []
+        
+        for key, label in metric_defs:
+            val_base = get_total(res_baseline, key)
+            val_curr = get_total(res_current, key)
+            diff = val_curr - val_base
+            data.append({
+                t("col_metric"): label,
+                t("col_without_inv"): val_base,
+                t("col_with_inv"): val_curr,
+                t("col_difference"): diff
+            })
+            
+        df_comp = pd.DataFrame(data)
+        
+        # Display with Styler
+        # Highlight Difference: Green if > 0, Red if < 0 (assuming higher is better for these metrics)
+        def color_diff(val):
+            color = 'green' if val > 0 else 'red' if val < 0 else 'gray'
+            return f'color: {color}'
+            
+        st.dataframe(
+            df_comp.style.format({
+                t("col_without_inv"): "{:,.0f}",
+                t("col_with_inv"): "{:,.0f}",
+                t("col_difference"): "{:+,.0f}"
+            }).map(color_diff, subset=[t("col_difference")]),
+            use_container_width=True
+        )
+        st.divider()
+    else:
+        # CTA to enable Growth Mode
+        with st.container():
+            st.info(f"💡 **{t('growth_analysis_title')}**: " + t("enable_growth_hint"))
+
+
     # 1. Configuration
     c1, c2 = st.columns(2)
     

@@ -296,7 +296,7 @@ TRANSLATIONS = {
         "tv_assumption_warning": "⚠️ **Warning:** Growth rates above 3% are often considered aggressive and above long-term inflation.",
         
         "risk_decision_title": "🛡️ Decision Support & Risk Summary",
-        "prob_loss_msg": "📉 **Probability of Loss (NPV < 0):** {prob:.1f}%",
+        "prob_loss_msg": "📉 **This investment has a {prob:.1f}% probability of negative value (NPV < 0).**",
         "var_msg": "⚠️ **Value at Risk (VaR 95%):** In the worst 5% of cases, losses will exceed **{amy}**.",
         "dist_explanation": "ℹ️ **Distributions:**\n\n* **Normal:** Standard uncertainties (Inflation etc.).\n* **Triangular:** Estimates with known min/max bounds (Construction cost etc.).",
         
@@ -308,10 +308,46 @@ TRANSLATIONS = {
         
         "tv_explanation_title": "ℹ️ Terminal Value Methods",
         "tv_explanation_gordon": "📈 **Perpetuity Growth (Gordon):** Assumes the company grows at a constant rate ({g}%) forever. Suitable for stable cash flows. Formula: `(Last FCF * (1+g)) / (WACC - g)`.",
-        "tv_explanation_multiple": "🏢 **Exit Multiple:** Assumes the company is sold based on a market multiple ({m}x) of its final year EBITDA. Suitable for M&A and Private Equity. Formula: `Last Year EBITDA * Multiple`.",
+        "tv_explanation_multiple": "🏢 **Exit Multiple:** Assumes the project is sold/exited based on a market multiple ({m}x) of its final year EBITDA. Standard market valuation approach. Formula: `Last Year EBITDA * Multiple`.",
         "tv_explanation_none": "🛑 **No Terminal Value:** Assumes the project is liquidated or has 0 value at the end of the horizon (Year N). Only cash flows within the projection period are considered.",
         "financial_stmts_title": "Financial Statements",
-        "mode_badge_fcfe": "Mode: Equity (FCFE)",
+        "mode_badge_fcfe": "Equity (FCFE)",
+        "term_debt_logic_fcfe": "⚠️ **Mode Warning (FCFE):** Since you are in 'Levered' mode, the choice to Payoff or Refinance debt directly impacts Cash Flow to Equity and thus **Equity NPV**.",
+        "term_debt_logic_fcff": "ℹ️ **Mode Info (FCFF):** Since you are in 'Unlevered' mode, debt movements do not affect Free Cash Flow to Firm (Entertainment Value).",
+        # Waterfall Bridge
+        "lbl_waterfall_bridge": "EBITDA → FCFF → FCFE Bridge",
+        "lbl_unlevered_tax": "Tax (Unlevered)",
+        "lbl_net_interest": "Net Interest",
+        "lbl_fcff_subtotal": "FCFF (Firm)",
+        "lbl_fcfe_final": "FCFE (Equity)",
+        "baseline_toggle_label": "Enable Incremental Analysis (Baseline vs Investment)",
+        "baseline_toggle_help": "If enabled, analyzes the delta between 'Existing Business' (No Capex) and 'With Investment'. Recommended for expansion or technology projects.",
+        "inc_ebitda_section": "🚀 EBITDA Impact of Investment (Avg/Year)",
+        "inc_ebitda_baseline": "Baseline (Without Inv.)",
+        "inc_ebitda_with_inv": "With Investment",
+        "inc_ebitda_delta": "Δ Uplift",
+        "inc_ebitda_tooltip": "Incremental EBITDA generated purely by the investment.",
+        
+        "growth_analysis_title": "🔍 Growth Analysis (Baseline vs Investment)",
+        "col_without_inv": "Without Investment",
+        "col_with_inv": "With Investment",
+        "col_difference": "Difference (Impact)",
+        
+        "lbl_is_incremental": "Is this item incremental (Linked to Investment)?",
+        "help_is_incremental": "If checked, this item is excluded from Baseline (Without Investment) calculation.",
+        
+        "enable_growth_hint": "To see the 'Baseline vs Investment' impact table, enable 'Incremental Analysis' in Project Setup.",
+        
+        "ma_scope_disclaimer": "ℹ️ **Scope Note:** This tool is designed for **Organic Growth and Capital Investments (Greenfield/Brownfield)**. It does **not** cover Strategic Acquisitions (M&A), Goodwill, or Share Purchase Agreements.",
+        
+        "col_oee_base": "Base OEE (%)",
+        "col_scrap_base": "Base Scrap (%)",
+        "col_cost_base": "Base Unit Cost",
+        "col_oee_base_help": "Pre-Investment OEE. If empty, assumes no change.",
+        "col_scrap_base_help": "Pre-Investment Scrap Rate. If empty, assumes no change.",
+        "col_cost_base_help": "Pre-Investment Variable Cost. If empty, assumes no change.",
+        
+        "th_avg_ebitda": "Avg. EBITDA / Year",
     },
     "tr": {
         # Sidebar
@@ -732,7 +768,7 @@ TRANSLATIONS = {
         "tv_assumption_warning": "⚠️ **Uyarı:** %3 üzeri büyüme oranları genellikle enflasyonun üzerinde kabul edilir ve riskli bulunabilir.",
         
         "risk_decision_title": "🛡️ Karar Destek & Risk Özeti",
-        "prob_loss_msg": "📉 **Zarar Etme Olasılığı (NPV < 0):** %{prob:.1f}",
+        "prob_loss_msg": "📉 **Bu yatırımın %{prob:.1f} olasılıkla değeri negatife düşer (NPV < 0).**",
         "var_msg": "⚠️ **Riske Maruz Değer (VaR 95%):** En kötü %5 senaryoda zarar en az **{amy}** olacak.",
         "dist_explanation": "ℹ️ **Dağılımlar:**\n\n* **Normal:** Standart belirsizlikler (Enflasyon vb.) için uygundur.\n* **Üçgen (Triangular):** Alt ve üst sınırları tecrübeyle bilinen tahminler (İnşaat maliyeti vb.) için uygundur.",
         
@@ -744,10 +780,46 @@ TRANSLATIONS = {
         
         "tv_explanation_title": "ℹ️ Terminal Değer Yöntemleri",
         "tv_explanation_gordon": "📈 **Sonsuz Büyüme (Gordon Growth):** Şirketin sonsuza kadar sabit bir hızda ({g}%) büyüyeceği varsayılır. Nakit akışı (FCF) istikrarlı şirketler için uygundur. Formül: `(Son FCF * (1+g)) / (WACC - g)`.",
-        "tv_explanation_multiple": "🏢 **Çıkış Çarpanı (Exit Multiple):** Şirketin son yıl FAVÖK (EBITDA) değerinin, piyasa çarpanı ({m}x) ile satılacağı varsayılır. M&A ve özel sermaye projeleri için uygundur. Formül: `Son Yıl FAVÖK * Çarpan`.",
+        "tv_explanation_multiple": "🏢 **Çıkış Çarpanı (Exit Multiple):** Projenin vadesi sonunda, o yılki FAVÖK (EBITDA) değerinin piyasa çarpanı ({m}x) üzerinden satılarak elden çıkarılacağı (Exit) varsayılır. Tipik piyasa değerlemesi yaklaşımıdır. Formül: `Son Yıl FAVÖK * Çarpan`.",
         "tv_explanation_none": "🛑 **Terminal Değer Yok:** Projenin ömrü sonunda (N. yıl) tasfiye edileceği veya değerinin 0 olacağı varsayılır. Sadece projeksiyon dönemindeki nakit akışları dikkate alınır.",
         "financial_stmts_title": "Finansal Tablolar",
-        "mode_badge_fcfe": "Mod: Hissedar (FCFE)",
+        "mode_badge_fcfe": "Hissedar (FCFE)",
+        "term_debt_logic_fcfe": "⚠️ **Mod Uyarısı (FCFE):** 'Levered' modunda olduğunuz için, borç ödeme tercihi (Kapatma/Yeniden Yapılandırma) nakit akışını ve dolayısıyla **Özkaynak Değerini (NPV)** doğrudan etkiler.",
+        "term_debt_logic_fcff": "ℹ️ **Mod Bilgisi (FCFF):** 'Unlevered' modunda olduğunuz için, borç hareketleri Firma Değerini (Enterprise Value) etkilemez. Ancak net borç hesabı için önemlidir.",
+        # Waterfall Bridge
+        "lbl_waterfall_bridge": "EBITDA → FCFF → FCFE Köprüsü",
+        "lbl_unlevered_tax": "Vergi (Unlevered)",
+        "lbl_net_interest": "Net Faiz Gideri",
+        "lbl_fcff_subtotal": "FCFF (Firma)",
+        "lbl_fcfe_final": "FCFE (Özkaynak)",
+        "baseline_toggle_label": "Mevcut İş / Baz Senaryo Karşılaştırması (Growth Mode)",
+        "baseline_toggle_help": "İşaretlenirse, 'Mevcut Durum' (Yatırımsız) ile 'Yatırımlı Durum' arasındaki farkı analiz eder. Teknoloji yatırımları ve kapasite artışları için önerilir.",
+        "inc_ebitda_section": "🚀 Yatırımın FAVÖK Etkisi (Yıllık Ort.)",
+        "inc_ebitda_baseline": "Yatırımsız (Baseline)",
+        "inc_ebitda_with_inv": "Yatırımlı (Mevcut)",
+        "inc_ebitda_delta": "Δ İyileştirme",
+        "inc_ebitda_tooltip": "Yatırım sayesinde kazanılan ek FAVÖK.",
+        
+        "growth_analysis_title": "🔍 Büyüme Analizi (Yatırımsız vs Yatırımlı)",
+        "col_without_inv": "Yatırım Olmadan (Baseline)",
+        "col_with_inv": "Yatırım İle (Mevcut)",
+        "col_difference": "Fark (Katkı)",
+        
+        "lbl_is_incremental": "Bu kalem yatırım ile mi geliyor? (Incremental)",
+        "help_is_incremental": "İşaretlenirse, 'Yatırım Olmadan (Baseline)' hesaplamasında bu kalem hariç tutulur. Sadece yatırım senaryosunda devreye girer.",
+        
+        "enable_growth_hint": "Daha detaylı 'Baseline vs Yatırım' fark analizi ve Δ-Tablosu için, Proje Ayarları sayfasından 'Mevcut İş / Baz Senaryo Karşılaştırması' modunu etkinleştirin.",
+        
+        "ma_scope_disclaimer": "ℹ️ **Kapsam Notu:** Bu araç **Organik Büyüme ve Sermaye Yatırımları (Greenfield/Brownfield)** için tasarlanmıştır. Stratejik Şirket Satın Almaları (M&A), Şerefiye (Goodwill) ve Hisse Devri hesaplamalarını **kapsamaz**.",
+        
+        "col_oee_base": "Eski OEE (%)",
+        "col_scrap_base": "Eski Fire (%)",
+        "col_cost_base": "Eski Birim Mly. (Birim)",
+        "col_oee_base_help": "Yatırım ÖNCESİ OEE. Boş bırakılırsa değişim yok varsayılır.",
+        "col_scrap_base_help": "Yatırım ÖNCESİ Fire oranı. Boş bırakılırsa değişim yok varsayılır.",
+        "col_cost_base_help": "Yatırım ÖNCESİ değişken birim maliyet. Boş bırakılırsa değişim yok varsayılır.",
+        
+        "th_avg_ebitda": "FAVÖK (Yıllık Ort.)",
     },
 }
 

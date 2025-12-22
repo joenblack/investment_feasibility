@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional, Literal, Dict
+from typing import List, Optional, Literal, Dict, Any
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 import uuid
 
@@ -27,6 +27,7 @@ class CAPEXItem(BaseModel):
 class Product(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str = "Product A"
+    is_incremental: bool = False # If True, exists only with investment
     unit_price: float = 100.0
     unit_cost: float = 60.0 # Variable cost per unit
     currency: CurrencyType = "TRY"
@@ -40,6 +41,12 @@ class Product(BaseModel):
     oee_percent: float = 0.85 # Efficiency
     scrap_rate: float = 0.02 # Scrap % (Cost incurred, no revenue)
     
+    # Baseline (Before Investment) - Optional
+    # If None, assumes same as Target (Greenfield or No Change)
+    oee_percent_baseline: Optional[float] = None 
+    scrap_rate_baseline: Optional[float] = None
+    unit_cost_baseline: Optional[float] = None
+    
     # Commercial / Payment
     # Cash Flow Timing
     advance_payment_pct: float = 0.0 # 0.20 = 20% advance
@@ -50,6 +57,7 @@ class Product(BaseModel):
 class ExpenseItem(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str = "Rent"
+    is_incremental: bool = False # If True, added by investment
     amount_per_year: float = 0.0
     currency: CurrencyType = "TRY"
     growth_rate: float = 0.0
@@ -58,14 +66,31 @@ class ExpenseItem(BaseModel):
 class Personnel(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     role: str = "Manager"
-    count: int = 1
+    count: float = 1.0 # Support partial FTE
+    is_incremental: bool = False # If True, hired specifically for the investment
+    
+    # Financials
     monthly_gross_salary: float = 0.0
     currency: CurrencyType = "TRY"
-    yearly_raise_rate: float = 0.0
-    sgk_tax_rate: float = 0.22 # Employer burden
-    sgk_tax_rate: float = 0.22 # Employer burden
+    sgk_tax_rate: float = 0.22 # Employer burden (SGK+Tax)
+    annual_raise: float = 0.0 # Real raise
+    yearly_raise_rate: float = 0.0 # Alias/Duplicate for backward compat if Engine uses it? Engine uses 'yearly_raise_rate'
+    
+    # Timeline
     start_year: int = 1
-    is_scalable: bool = False # If true, count scales with Global Volume Growth
+    
+    # Scalability
+    is_scalable: bool = False # If True, count scales with Total Production Volume
+    
+    @field_validator('yearly_raise_rate', mode='before')
+    @classmethod
+    def align_raise(cls, v, values):
+        # Ensure yearly_raise_rate is populated
+        return v
+        
+    def model_post_init(self, __context: Any) -> None:
+        # Sync duplicate fields if needed
+        pass
 
 class Loan(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -201,8 +226,13 @@ class ProjectModel(BaseModel):
     # Calculation Settings
     discount_rate_unlevered: float = 0.20 # WACC
     discount_rate_levered: float = 0.25 # Cost of Equity
+    discount_rate_unlevered: float = 0.20 # WACC
+    discount_rate_levered: float = 0.25 # Cost of Equity
     calculation_mode: Literal["Unlevered", "Levered"] = "Unlevered"
     terminal_debt_treatment: Literal["payoff", "refinance"] = "payoff"
+    
+    # Strategic / Expansion Features
+    baseline_enabled: bool = False # If true, performs "With/Without" investment analysis
 
     @field_validator('horizon_years')
     @classmethod

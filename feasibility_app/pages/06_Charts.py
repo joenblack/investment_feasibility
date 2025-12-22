@@ -127,3 +127,79 @@ try:
             st.info(t("no_rev_year_2"))
 except Exception as e:
     st.write(f"Could not calculate break-even: {e}")
+
+# 5. Advanced EBITDA -> FCFF -> FCFE Bridge
+st.subheader(t("lbl_waterfall_bridge"))
+
+# Data Prep
+t_rate = st.session_state.project.tax_config.corporate_tax_rate
+sum_ebitda = results.income_statement["EBITDA"].sum()
+sum_interest = results.income_statement["Interest"].sum() # Negative
+sum_tax_lev = results.income_statement["Tax"].sum() # Negative
+sum_capex = results.cash_flow_statement["CAPEX (w/ VAT)"].sum() # Negative
+sum_nwc = results.cash_flow_statement["Delta NWC"].sum() # Neg/Pos
+sum_grants = results.cash_flow_statement["Grants (Cash)"].sum() # Positive
+sum_principal = results.cash_flow_statement["Principal Repayment"].sum() # Negative
+sum_proceeds = results.cash_flow_statement["Debt Drawdown"].sum() # Positive
+
+# Calculations
+# Unlevered Tax = Actual Tax + Shield
+# Shield = Interest (neg) * Rate.  Shield benefit is positive relative to tax cost? 
+# Wait. Interest Expense reduces EBT. So Tax Paid is LOWER.
+# Unlevered Tax (Higher Cost) = Tax Paid (Low) - Tax Benefit (Positive)?
+# Cost perspective:
+# Tax Paid = -80. Benefit = +20. Unlevered Tax = -100.
+# Formula: Tax_Unlev = Tax_Lev + (Interest * Rate).  (-80 + (-100*0.2) = -80 - 20 = -100). Correct.
+tax_unlev = sum_tax_lev + (sum_interest * t_rate)
+
+# Net Interest = Interest (Gross) - Shield Benefit.
+# Cost: -100 - (-20) = -80? No.
+# Net Interest Cost = Interest (Gross) * (1-t).
+# -100 * 0.8 = -80. Correct.
+net_interest = sum_interest * (1 - t_rate)
+
+# FCFF Check
+fcff_calc = sum_ebitda + tax_unlev + sum_capex + sum_nwc + sum_grants
+
+# Chart
+fig_bridge = go.Figure(go.Waterfall(
+    name = "Bridge", orientation = "v",
+    measure = ["absolute", "relative", "relative", "relative", "relative", "subtotal", "relative", "relative", "relative", "total"],
+    x = [
+        "EBITDA", 
+        t("lbl_unlevered_tax"), 
+        "CAPEX", 
+        "NWC", 
+        t("th_grants_cash"), 
+        t("lbl_fcff_subtotal"), 
+        t("lbl_net_interest"), 
+        t("th_debt_principal"), 
+        t("th_debt_proceeds"), 
+        t("lbl_fcfe_final")
+    ],
+    textposition = "outside",
+    text = [f"{val/1_000_000:.1f}M" for val in [
+        sum_ebitda, tax_unlev, sum_capex, sum_nwc, sum_grants, fcff_calc,
+        net_interest, sum_principal, sum_proceeds, (fcff_calc + net_interest + sum_principal + sum_proceeds)
+    ]],
+    y = [
+        sum_ebitda, 
+        tax_unlev, 
+        sum_capex, 
+        sum_nwc, 
+        sum_grants, 
+        0, # Subtotal
+        net_interest, 
+        sum_principal, 
+        sum_proceeds, 
+        0  # Total
+    ],
+    connector = {"line":{"color":"rgb(63, 63, 63)"}},
+))
+
+fig_bridge.update_layout(
+    title = t("lbl_waterfall_bridge"),
+    showlegend = False,
+    waterfallgap = 0.3
+)
+st.plotly_chart(fig_bridge, use_container_width=True)

@@ -81,6 +81,13 @@ with tab1:
         help=t("terminal_treatment_help")
     )
     
+    # Contextual Logic Explanation
+    calc_mode = st.session_state.project.calculation_mode
+    if calc_mode == "Levered":
+        st.warning(t("term_debt_logic_fcfe"))
+    else:
+        st.info(t("term_debt_logic_fcff"))
+    
     # Find key from value
     for k, v in treatment_map.items():
         if v == selected_option:

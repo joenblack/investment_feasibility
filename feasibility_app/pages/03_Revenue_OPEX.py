@@ -48,6 +48,13 @@ with tab1:
         d['oee_percent'] = d.get('oee_percent', 0) * 100
         d['scrap_rate'] = d.get('scrap_rate', 0) * 100
         d['advance_payment_pct'] = d.get('advance_payment_pct', 0) * 100
+        
+        # New Baseline Scaling
+        if d.get('oee_percent_baseline') is not None:
+             d['oee_percent_baseline'] = d['oee_percent_baseline'] * 100
+        if d.get('scrap_rate_baseline') is not None:
+             d['scrap_rate_baseline'] = d['scrap_rate_baseline'] * 100
+             
         data.append(d)
 
     if not data:
@@ -80,7 +87,14 @@ with tab1:
         "oee_percent": st.column_config.NumberColumn(f"{t('col_oee')} (%)", format="%.2f", min_value=0.0, max_value=100.0, help=t("oee_help")),
         "scrap_rate": st.column_config.NumberColumn(f"{t('col_scrap')} (%)", format="%.2f", min_value=0.0, max_value=50.0, help=t("scrap_help")),
         "advance_payment_pct": st.column_config.NumberColumn(f"{t('col_adv_pay')} (%)", format="%.2f", min_value=0.0, max_value=100.0, help=t("advance_help")),
-        "payment_terms_days": st.column_config.NumberColumn(t("col_terms"), min_value=0, max_value=365, help=t("terms_help"))
+        "payment_terms_days": st.column_config.NumberColumn(t("col_terms"), min_value=0, max_value=365, help=t("terms_help")),
+        "payment_terms_days": st.column_config.NumberColumn(t("col_terms"), min_value=0, max_value=365, help=t("terms_help")),
+        "is_incremental": st.column_config.CheckboxColumn(t("lbl_is_incremental"), help=t("help_is_incremental"), default=False),
+        
+        # Baseline Fields
+        "oee_percent_baseline": st.column_config.NumberColumn(f"{t('col_oee_base')}", format="%.2f", min_value=0.0, max_value=100.0, help=t("col_oee_base_help")),
+        "scrap_rate_baseline": st.column_config.NumberColumn(f"{t('col_scrap_base')}", format="%.2f", min_value=0.0, max_value=50.0, help=t("col_scrap_base_help")),
+        "unit_cost_baseline": st.column_config.NumberColumn(t("col_cost_base"), format="%.2f", min_value=0, help=t("col_cost_base_help")),
     }
     
     edited_df = st.data_editor(
@@ -90,9 +104,11 @@ with tab1:
         use_container_width=True,
         column_config=cc,
         column_order=[
-            "status_display", "status_reason", "name", "initial_volume", "unit_price", "unit_cost", "currency", 
+            "status_display", "status_reason", "is_incremental", "name", 
+            "initial_volume", "unit_price", "unit_cost", "currency",
             "year_growth_rate", "price_escalation_rate", "cost_escalation_rate",
             "production_capacity_per_year", "oee_percent", "scrap_rate",
+            "oee_percent_baseline", "scrap_rate_baseline", "unit_cost_baseline", # Added here
             "advance_payment_pct", "payment_terms_days"
         ]
     )
@@ -126,6 +142,11 @@ with tab1:
                 # SCALING BACK: Convert 5.0 -> 0.05
                 if k in ['year_growth_rate', 'price_escalation_rate', 'cost_escalation_rate', 'oee_percent', 'scrap_rate', 'advance_payment_pct']:
                     clean_data[k] = float(v) / 100.0
+                elif k in ['oee_percent_baseline', 'scrap_rate_baseline']: # New Fields
+                     if v is not None:
+                        clean_data[k] = float(v) / 100.0
+                     else:
+                        clean_data[k] = None
                 else:
                     clean_data[k] = v
         return clean_data
@@ -158,7 +179,10 @@ with tab1:
         current_products_dump = [p.model_dump() for p in st.session_state.project.products]
         
         if candidate_dumps != current_products_dump:
-            st.session_state.project.products = candidate_products
+            # FIX: Pydantic V2 Validation Error with Streamlit Reloading
+            # Assigning list of dicts forces Pydantic to re-validate and instantiate
+            # cleanly, avoiding class definition mismatch.
+            st.session_state.project.products = [p.model_dump() for p in candidate_products]
             
             # Persist to DB
             from core.db import save_project
@@ -192,9 +216,10 @@ with tab2:
         e_cat = c2.text_input(t("category"), "General")
         e_amount = c3.number_input(t("annual_amount"), 0.0)
         e_growth = st.number_input(t("growth_rate"), 0.0)
+        e_inc = st.checkbox(t("lbl_is_incremental"), help=t("help_is_incremental"), key="new_exp_inc") # New Checkbox
         
         if st.button(t("add_expense")):
-            exp = ExpenseItem(name=e_name, category=e_cat, amount_per_year=e_amount, growth_rate=e_growth/100.0)
+            exp = ExpenseItem(name=e_name, category=e_cat, amount_per_year=e_amount, growth_rate=e_growth/100.0, is_incremental=e_inc)
             st.session_state.project.fixed_expenses.append(exp)
             st.rerun()
             
@@ -220,7 +245,11 @@ with tab3:
         raise_r = c6.number_input(t("annual_raise"), 0.0)
         
         # Scaling Option
-        is_scalable = st.checkbox(t("is_scalable_label"), help=t("is_scalable_help"))
+        # Scaling Option & Incremental
+        c7, c8 = st.columns(2)
+        is_scalable = c7.checkbox(t("is_scalable_label"), help=t("is_scalable_help"))
+        is_inc = c8.checkbox(t("lbl_is_incremental"), help=t("help_is_incremental"), key="new_pers_inc")
+        
         if is_scalable:
             st.caption(t("scalable_logic_explanation"))
         
@@ -228,7 +257,7 @@ with tab3:
             pers = Personnel(
                 role=role, count=count, monthly_gross_salary=salary,
                 sgk_tax_rate=sgk/100.0, start_year=start_y, yearly_raise_rate=raise_r/100.0,
-                is_scalable=is_scalable
+                is_scalable=is_scalable, is_incremental=is_inc
             )
             st.session_state.project.personnel.append(pers)
             st.rerun()

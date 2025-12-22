@@ -139,6 +139,26 @@ if st.session_state.project and st.session_state.project.id:
         with c4:
             st.metric(t("payback_period"), f"{kpi.get('payback', 0):.1f}", help=t("payback_help"))
             
+        # --- INCREMENTAL ANALYSIS (Sprint 1) ---
+        if getattr(st.session_state.project, 'baseline_enabled', False):
+            from core.engine import calculate_baseline
+            res_base = calculate_baseline(st.session_state.project)
+            
+            # Avg EBITDA
+            ebitda_base = res_base.ebitda_arr.mean() if len(res_base.ebitda_arr) > 0 else 0
+            ebitda_curr = results.ebitda_arr.mean() if len(results.ebitda_arr) > 0 else 0
+            delta_ebitda = ebitda_curr - ebitda_base
+            
+            st.divider()
+            
+            # Highlight Panel for Incremental Analysis
+            with st.container(border=True):
+                st.markdown(f"#### {t('inc_ebitda_section')}")
+                ic1, ic2, ic3 = st.columns(3)
+                ic1.metric(t("inc_ebitda_baseline"), f"{ebitda_base:,.0f} {fmt_currency}")
+                ic2.metric(t("inc_ebitda_with_inv"), f"{ebitda_curr:,.0f} {fmt_currency}")
+                ic3.metric(t("inc_ebitda_delta"), f"+{delta_ebitda:,.0f} {fmt_currency}", delta=delta_ebitda, help=t("inc_ebitda_tooltip"))
+            
         # --- SMART INSIGHTS ---
         insights_list = generate_insights(st.session_state.project, results)
         if insights_list:

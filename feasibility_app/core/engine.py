@@ -514,3 +514,44 @@ def calculate_financials(model: ProjectModel) -> FinancialResults:
     results.dscr_arr = dscr_arr
     
     return results
+
+    return calculate_financials(baseline)
+
+def calculate_baseline(project: ProjectModel) -> FinancialResults:
+    """
+    Calculates financials for the 'Baseline' scenario (Existing Business).
+    Logic: 
+    1. Removes all Investment Cash Flows (CAPEX, Financing, Grants).
+    2. Removes all Operating Items marked as 'is_incremental' (New Products, New OPEX, New Staff).
+    
+    This creates a true 'Before Investment' vs 'After Investment' EBITDA analysis.
+    """
+    # Create deep copy to avoid mutating original
+    baseline = project.model_copy(deep=True)
+    
+    # 1. Reset Investment-related lists (Cash Flow Impact)
+    baseline.capex_items = []
+    baseline.loans = []
+    baseline.leasings = []
+    baseline.grants = []
+    baseline.equity_contribution = 0.0
+    
+    # 2. Filter Operating Items (EBITDA Impact)
+    # Only keep items that are NOT incremental (i.e. Base Business)
+    kept_products = []
+    for p in baseline.products:
+        if not p.is_incremental:
+            # Revert to Baseline Efficiency/Cost if defined
+            if p.oee_percent_baseline is not None:
+                p.oee_percent = p.oee_percent_baseline
+            if p.scrap_rate_baseline is not None:
+                p.scrap_rate = p.scrap_rate_baseline
+            if p.unit_cost_baseline is not None:
+                p.unit_cost = p.unit_cost_baseline
+            kept_products.append(p)
+            
+    baseline.products = kept_products
+    baseline.fixed_expenses = [e for e in baseline.fixed_expenses if not e.is_incremental]
+    baseline.personnel = [p for p in baseline.personnel if not p.is_incremental]
+    
+    return calculate_financials(baseline)

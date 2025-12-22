@@ -66,11 +66,9 @@ def calculate_data_health(model: ProjectModel, results: FinancialResults) -> Tup
 def check_product_status(p) -> Tuple[str, str]:
     """
     Returns (Status, Reason) for a product.
-    Status: "✅ Included", "⚠️ Warning", "⛔ Excluded"
+    Status: "✅ Included", "⚠️ Inc. (No Rev)", "⛔ Excluded"
     """
-    # 1. Exclusion Rules (Critical - Zero Revenue)
-    if p.initial_volume <= 0:
-        return "⛔ Excluded", "Initial Volume is 0 or missing."
+    # 1. Exclusion Rules (Technical Constraints)
     if p.production_capacity_per_year <= 0:
         return "⛔ Excluded", "Capacity/Year is 0 or missing."
     if p.oee_percent <= 0:
@@ -78,13 +76,18 @@ def check_product_status(p) -> Tuple[str, str]:
     if p.scrap_rate >= 1.0:
         return "⛔ Excluded", "Scrap Rate >= 100%."
         
-    # 2. Warning Rules (Revenue is 0 or illogical but processed)
+    # 2. "Gray Area" / Included but Zero Revenue
+    # "Included but revenue = 0"
+    if p.initial_volume <= 0:
+        return "⚠️ Included (0 Vol)", "Initial Volume is 0. It is set up but produces nothing."
     if p.unit_price <= 0:
-        return "⚠️ Warning", "Unit Price is 0. Generates no revenue."
+        return "⚠️ Included (Free)", "Unit Price is 0. It produces volume but no revenue."
+        
+    # 3. Minor Warnings (Revenue exists but...)
     if p.unit_cost <= 0:
-        return "⚠️ Warning", "Unit Cost is 0. Profit margin may be unrealistic."
+        return "✅ Included", "Unit Cost is 0 (100% Margin)."
     if p.advance_payment_pct < 0 or p.advance_payment_pct > 1:
-        return "⚠️ Warning", "Advance Payment % should be between 0 and 100."
+        return "✅ Included", "Advance Payment % warning (0-100)."
         
     return "✅ Included", "Fully active."
 
