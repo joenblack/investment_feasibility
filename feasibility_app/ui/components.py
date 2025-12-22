@@ -65,7 +65,7 @@ def require_active_project():
     if not st.session_state.get("project_active", False):
         st.error("⚠️ No Active Project Selected")
         st.info("Please go to the Dashboard to Load or Create a project.")
-        st.page_link("App.py", label="Go to Dashboard", icon="🏠")
+        st.page_link("app.py", label="Go to Dashboard", icon="🏠")
         st.stop()
 
 
