@@ -27,18 +27,18 @@ results = calculate_financials(st.session_state.project)
 # Metric Columns
 c1, c2, c3, c4 = st.columns(4)
 
-c1.metric("NPV", format_currency(results.kpi['npv'], st.session_state.project.currency_base))
-c2.metric("IRR", f"{results.kpi['irr']*100:.2f}%")
-c3.metric("Payback", f"{results.kpi['payback']:.1f} " + t("year"))
+c1.metric("NPV", format_currency(results.kpi['npv'], st.session_state.project.currency_base), help=t("npv_help"))
+c2.metric("IRR", f"{results.kpi['irr']*100:.2f}%", help=t("irr_help"))
+c3.metric("Payback", f"{results.kpi['payback']:.1f} " + t("year"), help=t("payback_help"))
 # Placeholder for DSCR - will update engine next
 dscr_val = results.kpi.get('dscr_min', 0)
-c4.metric(t("dscr_label"), f"{dscr_val:.2f}x" if dscr_val > 0 else "N/A")
+c4.metric(t("dscr_label"), f"{dscr_val:.2f}x" if dscr_val > 0 else "N/A", help=t("dscr_help"))
 
 # Terminal Debt Visibility
 st.divider()
 st.subheader("Terminal Debt & KPI")
 k1, k2, k3 = st.columns(3)
-k1.metric(t("ending_debt_kpi"), format_currency(results.kpi.get('ending_debt_balance', 0), st.session_state.project.currency_base))
+k1.metric(t("ending_debt_kpi"), format_currency(results.kpi.get('ending_debt_balance', 0), st.session_state.project.currency_base), help=t("ending_debt_help"))
 k2.metric(t("term_treat_kpi"), t("val_refinance") if results.kpi.get('terminal_debt_treatment') == "refinance" else t("val_payoff"))    
 
 # Show Payoff amount if Payoff selected

@@ -14,17 +14,27 @@ with tab1:
     with st.expander(t("add_loan"), expanded=False):
         c1, c2, c3 = st.columns(3)
         l_name = c1.text_input(t("name"))
-        l_amount = c2.number_input(t("principal_amount"), 0.0)
+        l_amount = c2.number_input(t("principal_amount"), 0.0, help=t("loan_amount_help"))
         l_curr = c3.selectbox(t("currency"), ["TRY", "USD", "EUR"])
         
         c4, c5, c6 = st.columns(3)
-        l_rate = c4.number_input(t("interest_rate"), 0.0)
-        l_term = c5.number_input(t("term_years"), 1)
+        l_rate = c4.number_input(t("interest_rate"), 0.0, help=t("interest_rate_help"))
+        l_term = c5.number_input(t("term_years"), 1, help=t("term_years_help"))
         l_start = c6.number_input(t("start_year"), 1)
         
         c7, c8 = st.columns(2)
-        l_grace = c7.number_input(t("grace_period"), 0)
-        l_type = c8.selectbox(t("payment_type"), ["EqualPrincipal", "EqualPayment", "Bullet"])
+        l_grace = c7.number_input(t("grace_period"), 0, help=t("grace_period_help"))
+        
+        pay_map = {
+            "EqualPrincipal": t("val_equal_principal"), 
+            "EqualPayment": t("val_equal_payment"), 
+            "Bullet": t("val_bullet")
+        }
+        l_type = c8.selectbox(
+            t("payment_type"), 
+            ["EqualPrincipal", "EqualPayment", "Bullet"],
+            format_func=lambda x: pay_map.get(x, x)
+        )
         
         if st.button(t("add_loan")):
             loan = Loan(
@@ -45,7 +55,7 @@ with tab1:
     st.divider()
     st.header(t("equity_header"))
     st.info(t("equity_info"))
-    st.session_state.project.equity_contribution = st.number_input(t("initial_equity"), value=st.session_state.project.equity_contribution)
+    st.session_state.project.equity_contribution = st.number_input(t("initial_equity"), value=st.session_state.project.equity_contribution, help=t("initial_equity_help"))
     
     st.markdown("---")
     st.header(t("terminal_treatment"))
@@ -67,7 +77,8 @@ with tab1:
         t("terminal_treatment"),
         display_options,
         index=default_idx,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
+        help=t("terminal_treatment_help")
     )
     
     # Find key from value
@@ -78,7 +89,7 @@ with tab1:
 
 with tab2:
     st.header(t("corporate_tax"))
-    st.session_state.project.tax_config.corporate_tax_rate = st.number_input(t("tax_rate"), value=st.session_state.project.tax_config.corporate_tax_rate * 100.0) / 100.0
+    st.session_state.project.tax_config.corporate_tax_rate = st.number_input(t("tax_rate"), value=st.session_state.project.tax_config.corporate_tax_rate * 100.0, help=t("tax_rate_help")) / 100.0
     
     st.header(t("depreciation_lives"))
     c1, c2 = st.columns(2)
@@ -88,9 +99,9 @@ with tab2:
 with tab3:
     st.header(t("nwc_params"))
     c1, c2, c3 = st.columns(3)
-    st.session_state.project.nwc_config.dso = c1.number_input(t("dso"), value=st.session_state.project.nwc_config.dso)
-    st.session_state.project.nwc_config.dio = c2.number_input(t("dio"), value=st.session_state.project.nwc_config.dio)
-    st.session_state.project.nwc_config.dpo = c3.number_input(t("dpo"), value=st.session_state.project.nwc_config.dpo)
+    st.session_state.project.nwc_config.dso = c1.number_input(t("dso"), value=st.session_state.project.nwc_config.dso, help=t("dso_help"))
+    st.session_state.project.nwc_config.dio = c2.number_input(t("dio"), value=st.session_state.project.nwc_config.dio, help=t("dio_help"))
+    st.session_state.project.nwc_config.dpo = c3.number_input(t("dpo"), value=st.session_state.project.nwc_config.dpo, help=t("dpo_help"))
     
     st.checkbox(t("release_nwc"), value=st.session_state.project.nwc_config.terminal_release, key="nwc_term")
     st.session_state.project.nwc_config.terminal_release = st.session_state.nwc_term

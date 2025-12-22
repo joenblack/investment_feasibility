@@ -213,7 +213,50 @@ TRANSLATIONS = {
         "col_scenario": "Scenario",
 
         # Manual
-        "manual_title": "Model Contract & User Manual"
+        "manual_title": "Model Contract & User Manual",
+
+        # --- TOOLTIPS & HELP (EN) ---
+        "project_name_help": "Unique identifier for the project.",
+        "description_help": "Short summary of the project scope and objectives.",
+        "start_year_help": "The calendar year of the first period (Year 1).",
+        "project_horizon_help": "Duration of the analysis in years.",
+        "base_currency_help": "The currency used for final reporting and aggregation.",
+        "inflation_rate_help": "General annual inflation rate applied to costs/prices if no specific escalation is set.",
+        "discount_rate_help": "The rate used to discount future cash flows to Present Value.",
+        
+        "vat_rate_help": "Value Added Tax (VAT) rate applied to this item.",
+        "customs_rate_help": "Import duty rate for imported items.",
+        "investment_year_help": "The year (1..Horizon) when the investment occurs.",
+        
+        "initial_vol_help": "Sales volume in the first operating year.",
+        "vol_growth_help": "Annual percentage increase in sales volume.",
+        "unit_price_help": "Selling price per unit in Year 1.",
+        "unit_cost_help": "Variable cost per unit (materials, labor, etc.) in Year 1.",
+        "price_esc_help": "Annual percentage increase in Unit Price.",
+        "cost_esc_help": "Annual percentage increase in Unit Cost.",
+        "capacity_help": "Maximum production limit per year. Sales cannot exceed Capacity * OEE.",
+        "oee_help": "Overall Equipment Effectiveness (0-100%). Reduces effective capacity.",
+        "scrap_help": "Percentage of production wasted. Gross Production = Sales / (1-Scrap).",
+        "advance_help": "Portion of sales collected in advance (Cash Inflow before Revenue).",
+        "terms_help": "Days Sales Outstanding (DSO) specific to this product.",
+        
+        "loan_amount_help": "Total principal amount borrowed.",
+        "interest_rate_help": "Annual nominal interest rate.",
+        "term_years_help": "Total duration of the loan in years.",
+        "grace_period_help": "Period at the start where only Interest is paid (no Principal).",
+        "tax_rate_help": "Corporate Tax rate applied to EBT.",
+        "dso_help": "Days Sales Outstanding: Avg days to collect receivables.",
+        "dio_help": "Days Inventory Outstanding: Avg days to sell inventory.",
+        "dpo_help": "Days Payable Outstanding: Avg days to pay suppliers.",
+        
+        "npv_help": "Net Present Value: Sum of discounted cash flows minus initial investment.",
+        "irr_help": "Internal Rate of Return: The discount rate where NPV is zero.",
+        "payback_help": "Time required to recover the initial investment from cash flows.",
+        "dscr_help": "Debt Service Coverage Ratio: (CF Available / Debt Service). Should be > 1.0.",
+        "ending_debt_help": "Outstanding debt balance at the end of the project horizon.",
+        
+        "initial_equity_help": "Direct cash equity injected at the start of the project (Non-debt funding).",
+        "terminal_treatment_help": "How to handle remaining debt at the end of the horizon (Payoff vs Refinance).",
     },
     "tr": {
         # Sidebar
@@ -534,6 +577,9 @@ TRANSLATIONS = {
         "val_refinance": "Yeniden Finansman / Açık Kalsın",
         "val_payoff": "Kalan Borcu Kapat",
         "val_amort_linear": "Doğrusal (Linear)",
+        "val_equal_principal": "Eşit Anapara",
+        "val_equal_payment": "Eşit Taksit (Annuity)",
+        "val_bullet": "Balon Ödeme (Vade Sonu)",
         "no_rev_year_2": "2. Yıl Geliri Yok (Başabaş Hesaplanamadı)",
         "mc_run_warning": "Lütfen 'MC Kurulum' sekmesinden simülasyonu çalıştırın.",
         "cf_trajectory_title": "Nakit Akış Yörüngesi (Kümülatif)",
@@ -550,7 +596,50 @@ TRANSLATIONS = {
         "cat_other": "Diğer",
 
         # Manual
-        "manual_title": "Model Sözleşmesi & Kullanım Kılavuzu"
+        "manual_title": "Model Sözleşmesi & Kullanım Kılavuzu",
+
+        # --- İPUÇLARI & YARDIM (TR) ---
+        "project_name_help": "Projenin benzersiz tanımlayıcısı.",
+        "description_help": "Projenin kapsamı ve hedefleri hakkında kısa özet.",
+        "start_year_help": "İlk dönemin (1. Yıl) takvim yılı.",
+        "project_horizon_help": "Analizin kapsadığı toplam yıl süresi.",
+        "base_currency_help": "Raporlama ve sonuçların toplanması için kullanılan ana para birimi.",
+        "inflation_rate_help": "Özel bir artış oranı girilmediyse maliyet ve fiyatlara uygulanan genel enflasyon.",
+        "discount_rate_help": "Gelecekteki nakit akışlarını bugüne indirgemek için kullanılan oran.",
+        
+        "vat_rate_help": "Bu kaleme uygulanan KDV oranı.",
+        "customs_rate_help": "İthal edilen kalemler için uygulanan Gümrük Vergisi oranı.",
+        "investment_year_help": "Yatırımın gerçekleştiği yıl (1..Vade).",
+        
+        "initial_vol_help": "İlk operasyon yılındaki satış adedi.",
+        "vol_growth_help": "Satış hacminin yıllık yüzdesel artışı.",
+        "unit_price_help": "1. Yıldaki birim satış fiyatı.",
+        "unit_cost_help": "1. Yıldaki birim değişken maliyet (malzeme, işçilik vb.).",
+        "price_esc_help": "Birim Fiyatın yıllık artış oranı.",
+        "cost_esc_help": "Birim Maliyetin yıllık artış oranı.",
+        "capacity_help": "Yıllık maksimum üretim kapasitesi. Satışlar (Kapasite * OEE) değerini aşamaz.",
+        "oee_help": "Toplam Ekipman Verimliliği (%0-100). Efektif kapasiteyi düşürür.",
+        "scrap_help": "Fire oranı. Brüt Üretim = Satış / (1 - Fire) formülüyle maliyeti artırır.",
+        "advance_help": "Peşin tahsil edilen satış oranı. Nakit girişi gelirden önce olur.",
+        "terms_help": "Bu ürüne özel vade süresi (DSO).",
+        
+        "loan_amount_help": "Kullanılan toplam kredi anaparası.",
+        "interest_rate_help": "Yıllık nominal faiz oranı.",
+        "term_years_help": "Kredinin toplam vadesi (yıl).",
+        "grace_period_help": "Sadece faiz ödenen, ödemesiz dönem (yıl).",
+        "tax_rate_help": "Vergi Öncesi Kar (VÖK) üzerinden hesaplanan Kurumlar Vergisi oranı.",
+        "dso_help": "Alacak Tahsil Süresi: Satışın nakde dönme süresi (Gün).",
+        "dio_help": "Stok Tutma Süresi: Stoğun satılma süresi (Gün).",
+        "dpo_help": "Borç Ödeme Süresi: Tedarikçiye ödeme yapma süresi (Gün).",
+        
+        "npv_help": "Net Bugünkü Değer: İndirgenmiş nakit akışlarının toplamı eksi yatırım.",
+        "irr_help": "İç Verim Oranı: NPV'yi sıfır yapan iskonto oranı.",
+        "payback_help": "Yatırımın nakit akışlarıyla kendini geri ödeme süresi.",
+        "dscr_help": "Borç Servis Karşılama Oranı: (Kullanılabilir Nakit / Borç Servisi). 1.0'dan büyük olmalı.",
+        "ending_debt_help": "Proje vadesi sonundaki kalan kredi borcu.",
+        
+        "initial_equity_help": "Proje başında işletme tarafından konulan doğrudan nakit sermaye (Kredi dışı fonlama).",
+        "terminal_treatment_help": "Proje vadesi bittiğinde kalan kredi borcunun ne yapılacağı (Kapatma veya Yeniden Yapılandırma).",
     },
 }
 

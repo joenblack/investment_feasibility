@@ -14,18 +14,18 @@ st.markdown("---")
 
 c1, c2 = st.columns(2)
 with c1:
-    st.session_state.project.name = st.text_input(t("project_name"), value=st.session_state.project.name)
-    st.session_state.project.description = st.text_area(t("description"), value=st.session_state.project.description)
-    st.session_state.project.start_year = st.number_input(t("start_year"), value=st.session_state.project.start_year)
+    st.session_state.project.name = st.text_input(t("project_name"), value=st.session_state.project.name, help=t("project_name_help"))
+    st.session_state.project.description = st.text_area(t("description"), value=st.session_state.project.description, help=t("description_help"))
+    st.session_state.project.start_year = st.number_input(t("start_year"), value=st.session_state.project.start_year, help=t("start_year_help"))
 
 with c2:
-    st.session_state.project.horizon_years = st.slider(t("project_horizon"), 3, 30, st.session_state.project.horizon_years)
+    st.session_state.project.horizon_years = st.slider(t("project_horizon"), 3, 30, st.session_state.project.horizon_years, help=t("project_horizon_help"))
     curr_opts = ["TRY", "USD", "EUR"]
     try:
         curr_idx = curr_opts.index(st.session_state.project.currency_base)
     except:
         curr_idx = 0
-    st.session_state.project.currency_base = st.selectbox(t("base_currency"), curr_opts, index=curr_idx)
+    st.session_state.project.currency_base = st.selectbox(t("base_currency"), curr_opts, index=curr_idx, help=t("base_currency_help"))
     
     gran_map = {"Year": t("gran_year"), "Month": t("gran_month")}
     gran_opts = ["Year", "Month"]
@@ -38,7 +38,7 @@ with c2:
     )
     st.session_state.project.granularity = selected_gran
     
-    st.session_state.project.inflation_rate = st.number_input(t("inflation_rate"), value=st.session_state.project.inflation_rate * 100.0) / 100.0
+    st.session_state.project.inflation_rate = st.number_input(t("inflation_rate"), value=st.session_state.project.inflation_rate * 100.0, help=t("inflation_rate_help")) / 100.0
 
 st.header(t("valuation_method"))
 mode_map = {"Unlevered": t("val_unlevered"), "Levered": t("val_levered")}
@@ -52,8 +52,8 @@ st.session_state.project.calculation_mode = st.radio(
 # Discount Rates
 with c2:
     st.subheader(t("discount_settings"))
-    st.session_state.project.discount_rate_unlevered = st.number_input(t("discount_rate_wacc"), value=st.session_state.project.discount_rate_unlevered, format="%.3f", step=0.005)
-    st.session_state.project.discount_rate_levered = st.number_input(t("discount_rate_coe"), value=st.session_state.project.discount_rate_levered, format="%.3f", step=0.005)
+    st.session_state.project.discount_rate_unlevered = st.number_input(t("discount_rate_wacc"), value=st.session_state.project.discount_rate_unlevered, format="%.3f", step=0.005, help=t("discount_rate_help"))
+    st.session_state.project.discount_rate_levered = st.number_input(t("discount_rate_coe"), value=st.session_state.project.discount_rate_levered, format="%.3f", step=0.005, help=t("discount_rate_help"))
 
 # --- Exchange Rates ---
 st.divider()

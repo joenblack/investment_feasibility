@@ -69,18 +69,18 @@ with tab1:
         "status_display": st.column_config.TextColumn("Status", disabled=True, width="medium", help="✅ Included / ⛔ Excluded"),
         "status_reason": st.column_config.TextColumn("Issue", disabled=True, width="large"),
         "name": st.column_config.TextColumn(t("col_prod_name"), required=True),
-        "initial_volume": st.column_config.NumberColumn(t("col_vol"), format="%.0f", min_value=0),
-        "year_growth_rate": st.column_config.NumberColumn(f"{t('col_vol_growth')} (%)", format="%.2f"),
-        "unit_price": st.column_config.NumberColumn(t("col_price"), format="%.2f", min_value=0),
-        "unit_cost": st.column_config.NumberColumn(t("col_cost"), format="%.2f", min_value=0),
+        "initial_volume": st.column_config.NumberColumn(t("col_vol"), format="%.0f", min_value=0, help=t("initial_vol_help")),
+        "year_growth_rate": st.column_config.NumberColumn(f"{t('col_vol_growth')} (%)", format="%.2f", help=t("vol_growth_help")),
+        "unit_price": st.column_config.NumberColumn(t("col_price"), format="%.2f", min_value=0, help=t("unit_price_help")),
+        "unit_cost": st.column_config.NumberColumn(t("col_cost"), format="%.2f", min_value=0, help=t("unit_cost_help")),
         "currency": st.column_config.SelectboxColumn(t("col_curr"), options=["TRY", "USD", "EUR"], width="small", required=True),
-        "price_escalation_rate": st.column_config.NumberColumn(f"{t('col_price_esc')} (%)", format="%.2f"),
-        "cost_escalation_rate": st.column_config.NumberColumn(f"{t('col_cost_esc')} (%)", format="%.2f"),
-        "production_capacity_per_year": st.column_config.NumberColumn(t("col_capacity"), format="%.0f"),
-        "oee_percent": st.column_config.NumberColumn(f"{t('col_oee')} (%)", format="%.2f", min_value=0.0, max_value=100.0),
-        "scrap_rate": st.column_config.NumberColumn(f"{t('col_scrap')} (%)", format="%.2f", min_value=0.0, max_value=50.0),
-        "advance_payment_pct": st.column_config.NumberColumn(f"{t('col_adv_pay')} (%)", format="%.2f", min_value=0.0, max_value=100.0),
-        "payment_terms_days": st.column_config.NumberColumn(t("col_terms"), min_value=0, max_value=365)
+        "price_escalation_rate": st.column_config.NumberColumn(f"{t('col_price_esc')} (%)", format="%.2f", help=t("price_esc_help")),
+        "cost_escalation_rate": st.column_config.NumberColumn(f"{t('col_cost_esc')} (%)", format="%.2f", help=t("cost_esc_help")),
+        "production_capacity_per_year": st.column_config.NumberColumn(t("col_capacity"), format="%.0f", help=t("capacity_help")),
+        "oee_percent": st.column_config.NumberColumn(f"{t('col_oee')} (%)", format="%.2f", min_value=0.0, max_value=100.0, help=t("oee_help")),
+        "scrap_rate": st.column_config.NumberColumn(f"{t('col_scrap')} (%)", format="%.2f", min_value=0.0, max_value=50.0, help=t("scrap_help")),
+        "advance_payment_pct": st.column_config.NumberColumn(f"{t('col_adv_pay')} (%)", format="%.2f", min_value=0.0, max_value=100.0, help=t("advance_help")),
+        "payment_terms_days": st.column_config.NumberColumn(t("col_terms"), min_value=0, max_value=365, help=t("terms_help"))
     }
     
     edited_df = st.data_editor(
