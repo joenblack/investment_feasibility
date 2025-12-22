@@ -5,3 +5,4 @@ numpy-financial
 xlsxwriter
 pydantic
 plotly
+openpyxl
