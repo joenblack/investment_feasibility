@@ -12,7 +12,20 @@ manual_en = """
 ## 1. Introduction
 This application is a professional Investment Feasibility Tool designed for detailed financial analysis, risk assessment, and decision support. It supports **Unlevered** (FCFF) and **Levered** (FCFE) valuation modes, multi-currency modeling, and advanced uncertainty analysis.
 
-## 2. Valuation Modes
+## 2. System & Project Management
+
+### 2.1. Project Structure
+- **Dashboard**: The central hub to create new projects or load existing ones.
+- **Active Project**: You must Create or Load a project to access the input pages.
+- **Auto-Save**: Changes are stored in memory, but us the **"Save Project"** button to persist them to the database.
+
+### 2.2. Access Control
+- **Login**: Secure access with username/password.
+- **Roles**:
+    - **Admin/Editor**: Can create and edit projects.
+    - **Viewer**: Read-only access to projects and reports.
+
+## 3. Valuation Modes
 
 ### Mode 1: Unlevered (FCFF - Firm View)
 - **Perspective**: The Project / Firm as a whole.
@@ -28,185 +41,160 @@ This application is a professional Investment Feasibility Tool designed for deta
 - **Formula**: $$ FCFE = Net Income + Depreciation - \\Delta NWC - CAPEX + New Debt - Debt Repayment $$
 - **Use Case**: Determining the actual cash return to investors after debt service.
 
-## 3. Key Features
+## 4. Key Features
 
-### 3.1. Project Setup
-- **Granularity**: Choose between **Yearly** (standard) or **Monthly** (high precision) calculation. Note: Monthly calculations are aggregated to years for summary reports.
-- **Currencies**: Define a **Base Currency** for the report. Inputs can be in different currencies (e.g., CAPEX in USD, Revenue in EUR), and the engine converts them using fixed exchange rates defined here.
+### 4.1. Project Setup
+- **Granularity**: Choose **Yearly** (standard) or **Monthly** (high precision). Engine calculates at this level; reports aggregate to years for clarity.
+- **Currencies**: Define a **Base Currency**. Inputs can be multi-currency (e.g. CAPEX in USD) and are converted using fixed Setup rates.
+- **VAT Configuration**:
+    - **Global Exemption**: Check "VAT Exemption" in Setup for a project-wide 0% VAT baseline.
+    - **Item VAT**: Specific VAT rates can be set per CAPEX item (e.g., 18%, 20%).
 
-### 3.2. Market & Operations (Revenue/OPEX)
-- **Products**: Define multiple products with Volume, Price, Cost, and specific Growth/Escalation rates.
+### 4.2. Operations & Incentives
+- **Products**: Define Volume, Price, Cost, and specific Growth/Escalation rates.
 - **Capacity**: Sales volume is capped by `Capacity * OEE`.
-- **Incentives**: Add Investment Incentives (Cash Grants, Tax Reductions) in CAPEX/OPEX pages.
-- **Personnel**: Detailed payroll planning including social security taxes and annual raises.
+- **Incentives (Grants)**: Defined in **CAPEX** page.
+    - **Type**: Cash Grant.
+    - **Logic**: If "Capex Reduction" is true, the grant reduces the asset's book value (depreciation base). If false, it acts as a direct Cash Inflow.
+    - *Note: Corporate tax reductions are not explicitly modeled; adjust the global Tax Rate if needed.*
 
-### 3.3. Financial Engine
+### 4.3. Financial Engine
 - **Loans**: Support for equal payment (annuity), equal principal, and bullet repayment.
-- **Working Capital**: Auto-calculated based on DSO (Receivables), DIO (Inventory), and DPO (Payables).
-- **Terminal Debt**: Choose to "Pay off" remaining debt at project end or "Refinance" (exclude from final cash flow).
+- **Working Capital**: Auto-calculated based on DSO/DIO/DPO.
+- **Terminal Debt**: "Pay off" (cash outflow) or "Refinance" (exclude from final flow) at project end.
 
-## 4. Risk & Uncertainty Analysis
-This is a comprehensive module to stress-test your assumptions.
+## 5. Risk & Uncertainty Analysis
 
-### 4.1. Sensitivity (Tornado)
-- **Auto-Derivation**: The system automatically varies Price, Volume, CAPEX, and OPEX by +/- 10% (or configurable range).
-- **Tornado Chart**: Visualizes which variable has the biggest impact on NPV.
+### 5.1. Sensitivity (Tornado)
+- **Methodology**: The system automatically tests a fixed range (**+/- 10%**) on Price, Volume, CAPEX, and OPEX.
+- **Tornado Chart**: Visualizes the relative impact of these standardized shocks on NPV.
 
-### 4.2. Monte Carlo Simulation
-- **Concept**: Runs thousands of hypothetical scenarios by randomly shocking key variables.
-- **Distributions**: Normal (Bell Curve), Uniform (Range), or Triangular.
-- **Correlations**: Define relationships (e.g., if Price goes UP, Volume might go DOWN).
-- **Outputs**:
-    - **NPV Distribution**: Assessing the probability of loss (Negative NPV).
-    - **Value at Risk (VaR)**: The worst-case loss at 95% confidence.
+### 5.2. Monte Carlo Simulation
+- **Concept**: Runs thousands of hypothetical scenarios.
+- **Distributions**: Normal, **Lognormal**, Uniform, or Triangular.
+- **Correlations**: Define relationships (e.g., Price vs Volume).
+- **Outputs**: NPV Distribution, Probability of Profit, and Value at Risk (VaR).
 
-## 5. Comprehensive Test Scenario: "Global Auto Parts Plant"
-
-To fully test the application capabilities, follow this end-to-end scenario.
+## 6. Comprehensive Test Scenario: "Global Auto Parts Plant"
 
 ### Step A: Project Configuration
-1. **Name**: "Global AutoParts Plant"
-2. **Horizon**: 10 Years.
-3. **Granularity**: Monthly (to test precision).
-4. **Currency**: EUR (Base).
-5. **Inflation**: 2.5% (EUR).
-6. **Valuation**: Levered (FCFE) | Cost of Equity: 14%.
+1. **Name**: "Global AutoParts"
+2. **Horizon**: 10 Years | **Granularity**: Monthly.
+3. **Currency**: EUR | **Inflation**: 2.5%.
+4. **Valuation**: Levered (FCFE) | Cost of Equity: 14%.
 
 ### Step B: Investment (CAPEX) & Incentives
-1. **Land**: "Industrial Zone Plot", €2,000,000 (Year 1, No VAT).
-2. **Machinery**: "Robotic CNC Line", €5,000,000 (Year 1, VAT 0% - Incentive).
+1. **Land**: €2,000,000 (Year 1, No VAT).
+2. **Machinery**: "Robotic CNC", €5,000,000 (Year 1).
 3. **Incentive**:
-    - Add "Investment Grant": Type=Cash (Capex Reduction), Amount=€500,000, Year 1.
+    - Add "Investment Grant": Amount=€500,000, Year 1.
+    - Effect: Reduces Net Investment to €4.5M.
 
-### Step C: Operations (Revenue & OPEX)
-1. **Product 1**: "Engine Block (Exp)"
+### Step C: Operations
+1. **Product**: "Engine Block"
     - Vol: 10,000, Price: €800, Cost: €400.
     - Capacity: 12,000.
-    - Terms: Advance 20%, Payment 60 Days.
-2. **Product 2**: "Brake System (Loc)"
-    - Vol: 50,000, Price: €50, Cost: €30.
-    - Currency: TRY (Simulate multi-currency).
-3. **Personnel**:
-    - "Tech Team": 20 people, Cost €3,000/mo.
-    - "Management": 5 people, Cost €8,000/mo.
-4. **Fixed Expense**:
-    - "Energy": €200,000 / year (Escalation 3% > Inflation).
+2. **Fixed Expense**: "Energy", €200,000/yr.
 
 ### Step D: Finance
-1. **Loan**: "Investment Loan"
-    - Amount: €4,000,000.
-    - Interest: 5.5%.
-    - Term: 7 Years.
-    - Grace: 2 Years.
-2. **Working Capital**:
-    - DSO: 45 Days, DIO: 30 Days, DPO: 60 Days.
+1. **Loan**: €4,000,000, 5.5% Interest, 7 Years, 2 Years Grace.
 
-### Step E: Analysis & Verification
-1. **Check Financial Statements**: Ensure Loan Grace Period works (Interest only for Y1-Y2).
-2. **Check Incentives**: Confirm CAPEX outflow is Net of Grant (€5M - €0.5M = €4.5M).
-3. **Run Risk Analysis (Monte Carlo)**:
-    - Settings: 500 Iterations.
-    - Variables: Apply 10% Volatility to "Engine Block" Price.
-    - Result: Check "Probability of Profit". If < 80%, consider hedging or reducing costs.
-
-This scenario covers 90% of the application's logic including advanced localized tax/incentive handling.
+### Step E: Analysis
+1. **Check Incentives**: Confirm Net CAPEX in Cash Flow.
+2. **Monte Carlo**: Run 500 iterations, apply 10% Volatility to Price. Check Profit Probability.
 """
 
 manual_tr = """
 ## 1. Giriş
-Bu uygulama, detaylı finansal analiz, risk değerlendirmesi ve karar destek süreçleri için tasarlanmış profesyonel bir Yatırım Fizibilite Aracıdır. **Firma Bazlı** (Unlevered/FCFF) ve **Özkaynak Bazlı** (Levered/FCFE) değerleme modlarını, çoklu para birimi modellemesini ve gelişmiş risk analizlerini destekler.
+Bu uygulama, detaylı finansal analiz ve risk değerlendirmesi için tasarlanmış profesyonel bir Yatırım Fizibilite Aracıdır. **Firma Bazlı** (Unlevered/FCFF) ve **Özkaynak Bazlı** (Levered/FCFE) değerleme modlarını, çoklu para birimi modellemesini ve gelişmiş risk analizlerini destekler.
 
-## 2. Değerleme Modları
+## 2. Sistem ve Proje Yönetimi
+
+### 2.1. Proje Yapısı
+- **Panel (Dashboard)**: Yeni proje oluşturulan veya mevcut projelerin yüklendiği ana ekran.
+- **Aktif Proje**: Girdi sayfalarını kullanabilmek için önce bir projeyi "Yükle" veya "Oluştur" butonu ile aktif etmelisiniz.
+- **Otomatik Kayıt Yok**: Değişiklikler hafızada tutulur. Veritabanına kalıcı yazmak için **"Projeyi Kaydet"** butonunu kullanın.
+
+### 2.2. Erişim Yetkileri
+- **Giriş**: Kullanıcı adı/şifre ile güvenli erişim.
+- **Roller**:
+    - **Yönetici/Editör**: Proje oluşturabilir, düzenleyebilir ve kaydedebilir.
+    - **İzleyici**: Projeleri ve raporları sadece görüntüleyebilir.
+
+## 3. Değerleme Modları
 
 ### Mod 1: Unlevered (FCFF - Firma Görünümü)
-- **Perspektif**: Projenin/Firmanın kendisi (Finansman yapısından bağımsız).
+- **Perspektif**: Projenin/Firmanın kendisi.
 - **Nakit Akışı**: Firmaya Serbest Nakit Akışı (FCFF).
-- **İskonto Oranı**: AOSM / WACC (Ağırlıklı Ortalama Sermaye Maliyeti).
+- **İskonto Oranı**: AOSM / WACC.
 - **Formül**: $$ FCFF = FVÖK \\times (1 - Vergi) + Amortisman - \\Delta İşl.Serm. - Yatırım $$
-- **Kullanım**: Projenin operasyonel verimliliğini, borç yapısından bağımsız değerlendirmek için.
+- **Kullanım**: Finansman yapısından bağımsız, projenin operasyonel değerini görmek için.
 
 ### Mod 2: Levered (FCFE - Ortak Görünümü)
 - **Perspektif**: Hissedarlar / Yatırımcılar.
 - **Nakit Akışı**: Özkaynağa Serbest Nakit Akışı (FCFE).
 - **İskonto Oranı**: Özkaynak Maliyeti (Ke).
 - **Formül**: $$ FCFE = Net Kar + Amortisman - \\Delta İşl.Serm. - Yatırım + Yeni Kredi - Kredi Ödemesi $$
-- **Kullanım**: Borç servis edildikten sonra yatırımcının cebine kalan gerçek nakdi görmek için.
+- **Kullanım**: Borç ödendikten sonra yatırımcının cebine kalan net nakdi görmek için.
 
-## 3. Temel Özellikler
+## 4. Temel Özellikler
 
-### 3.1. Proje Ayarları & Girdiler
-- **Zaman Dilimi (Granularity)**: Hesaplamalar **Yıllık** (Standart) veya **Aylık** (Hassas) olarak yapılabilir. Aylık modda nakit akışları daha hassas modellenir.
-- **Çoklu Para Birimi**: Raporlama için bir **Baz Para Birimi** seçilir. Girdiler farklı kurlarda (Örn: Makine USD, Satış EUR, Maaş TRY) girilebilir; motor bunları otomatik dönüştürür.
+### 4.1. Proje Ayarları
+- **Zaman Dilimi**: **Yıllık** (standart) veya **Aylık** (hassas). Motor, seçilen dilimde hesaplar; raporlar genellikle yıllık özette sunulur.
+- **Birimler**: Raporlama için tek bir **Baz Para Birimi** seçilir. Girdiler farklı kurlarda olabilir; sistem sabit kurlar ile dönüştürür.
+- **KDV Yapısı**:
+    - **İstisna**: Ayarlar'da "KDV İstisnası Var mı?" kutucuğu, TÜM proje için KDV'yi %0 kabul eder.
+    - **Kalem Bazlı**: İstisna yoksa, her CAPEX kalemi için ayrı KDV oranı (%1, %10, %20) girilebilir.
 
-### 3.2. Operasyonel (Gelir/Gider)
-- **Kapasite Limiti**: Satış hacmi `Kapasite * OEE (Verimlilik)` ile sınırlanır.
-- **Teşvikler**: Yatırım Teşvik Belgesi kapsamındaki nakit hibeler veya KDV istisnaları sisteme tanımlanabilir.
-- **Ödeme Vadeleri**: Ürün bazında Avans (%) ve Vade (Gün) tanımlanarak İşletme Sermayesi ihtiyacı optimize edilebilir.
+### 4.2. Operasyon ve Teşvikler
+- **Ürünler**: Hacim, Fiyat, Maliyet ve Büyüme oranları tanımlayın.
+- **Teşvikler (Hibeler)**: **CAPEX** (Yatırım) sayfasında tanımlanır.
+    - **Mekanizma**: "Nakit Hibe" olarak eklenir. `Capex Reduction` seçilirse, varlığın defter değerini (amortisman matrahını) düşürür. Seçilmezse doğrudan Nakit Geliri sayılır.
+    - *Not: Kurumlar Vergisi indirimi ayrı bir modül değildir; genel Vergi Oranını düşürerek simüle edebilirsiniz.*
+- **Kapasite**: Satışlar `Kapasite * Verimlilik (OEE)` ile sınırlanır.
 
-### 3.3. Finansal Motor
-- **Krediler**: Eşit Taksitli (Annuite), Eşit Anaparaku veya Balon (Vade sonu ödemeli) krediler. Ödemesiz dönem desteği mevcuttur.
-- **Terminal Değer**: Proje sonunda kalan borcun kapatılması (Payoff) veya yeniden finanse edilmesi (Refinance) seçilebilir.
+### 4.3. Finansal Motor
+- **Krediler**: Eşit Taksit, Eşit Anapara veya Balon ödeme.
+- **İşletme Sermayesi**: DSO/DIO/DPO parametreleriyle otomatik hesaplanır.
+- **Vade Sonu (Terminal)**: Kalan borç, nakit akışından düşülerek kapatılabilir (Payoff) veya hariç tutulabilir (Refinance).
 
-## 4. Risk ve Belirsizlik Analizi (Gelişmiş)
-Yatırımın risklerini ölçmek için kapsamlı modül.
+## 5. Risk ve Belirsizlik Analizi
 
-### 4.1. Duyarlılık (Tornado)
-- **Otomatik Analiz**: Sistem; Fiyat, Hacim, Yatırım ve Gider kalemlerini +/- %10 (veya ayarlanabilir) oranında şoklayarak NPV etkisini ölçer.
-- **Tornado Grafiği**: Hangi değişkenin proje değerini en çok etkilediğini "Kasırga" grafiğiyle gösterir.
+### 5.1. Duyarlılık (Tornado)
+- **Yöntem**: Sistem; Fiyat, Hacim, Yatırım ve Gider kalemlerini sabit **+/- %10** aralığında değiştirerek NPV etkisini ölçer.
+- **Grafik**: Hangi değişkenin projeyi en çok etkilediğini gösterir.
 
-### 4.2. Monte Carlo Simülasyonu
-- **Konsept**: Binlerce farklı senaryoyu (iterasyon) rassal olarak çalıştırır.
-- **Korelasyonlar**: Değişkenler arası ilişki tanımlanabilir (Örn: Fiyat artarsa Hacim düşer).
-- **Çıktılar**:
-    - **Kar Olasılığı**: Projenin zarar etme ihtimali nedir?
-    - **Riske Maruz Değer (VaR %95)**: En kötü senaryoda kaybınız ne olur?
+### 5.2. Monte Carlo Simülasyonu
+- **Konsept**: Binlerce senaryo çalıştırarak olasılık dağılımı çıkarır.
+- **Dağılımlar**: Normal, **Lognormal**, Uniform veya Üçgen.
+- **Çıktılar**: NPV Dağılımı, Kar Olasılığı ve Riske Maruz Değer (VaR).
 
-## 5. Kapsamlı Test Senaryosu: "Global Otomotiv Yan Sanayi"
-
-Uygulamanın tüm özelliklerini (Teşvik, Kredi, Risk, Çoklu Döviz) test etmek için bu senaryoyu uygulayın.
+## 6. Örnek Test Senaryosu: "Global Otomotiv Fabrikası"
 
 ### Adım A: Proje Kurulumu
-1. **İsim**: "Global Otomotiv Fabrikası"
-2. **Vade**: 10 Yıl.
-3. **Zaman Dilimi**: Aylık (Hassasiyet testi için).
-4. **Para Birimi**: EUR (Baz).
-5. **Enflasyon**: %2.5 (Euro Bölgesi Enflasyonu).
-6. **Değerleme**: Levered (Özkaynak Bazlı) | Özkaynak Maliyeti: %14.
+1. **İsim**: "Global Otomotiv"
+2. **Vade**: 10 Yıl | **Zaman**: Aylık.
+3. **Para Birimi**: EUR | **Enflasyon**: %2.5.
+4. **Değerleme**: Levered (FCFE) | Özkaynak Maliyeti: %14.
 
-### Adım B: Yatırım (CAPEX) & Teşvikler
-1. **Arazi**: "OSB Arsa Tahsisi", 2,000,000 € (1. Yıl, KDV Yok).
-2. **Makine**: "Robotik Montaj Hattı", 5,000,000 € (1. Yıl).
+### Adım B: Yatırım ve Teşvik
+1. **Arazi**: 2,000,000 € (1. Yıl, KDV Yok).
+2. **Makine**: "Robotik Hat", 5,000,000 € (1. Yıl).
 3. **Teşvik**:
-    - "Yatırım Teşviki Ekle": Tip=Yatırım Teşviki (Nakit), Tutar=500,000 €, Yıl=1.
-    - Not: Bu işlem yatırım nakit çıkışını netleştirecektir.
+    - "Hibe Ekle": Tutar=500,000 €, Yıl=1.
+    - Etki: Net Yatırım harcamasını 4.5M €'ya düşürür.
 
-### Adım C: Operasyonlar
-1. **Ürün 1**: "Motor Bloğu (İhracat)"
+### Adım C: Operasyon
+1. **Ürün**: "Motor Bloğu"
     - Hacim: 10,000, Fiyat: 800 €, Maliyet: 400 €.
-    - Kapasite: 12,000 / Yıl.
-    - Ticari: Avans %20, Vade 60 Gün.
-2. **Ürün 2**: "Fren Sistemi (Yerli)"
-    - Hacim: 50,000.
-    - Para Birimi: TRY (Çoklu kur testi). Fiyat: 2000 TRY.
-3. **Personel**:
-    - "Mühendis Kadrosu": 20 Kişi, Maliyet 3,000 €/Ay.
-    - "Yönetim": 5 Kişi, Maliyet 8,000 €/Ay.
+2. **Sabit Gider**: "Enerji", 200,000 €/Yıl.
 
 ### Adım D: Finansman
-1. **Kredi**: "Yatırım Kredisi"
-    - Tutar: 4,000,000 €.
-    - Faiz: %5.5 (Yıllık).
-    - Vade: 7 Yıl.
-    - Ödemesiz Dönem: 2 Yıl (İnşaat süresince sadece faiz).
+1. **Kredi**: 4,000,000 €, %5.5 Faiz, 7 Yıl Vade, 2 Yıl Ödemesiz.
 
-### Adım E: Analiz ve Doğrulama
-1. **Nakit Akışını Kontrol Et**: 1. ve 2. yıllarda sadece faiz ödendiğini, 3. yıldan itibaren anapara ödemesinin başladığını "Finansal Tablolar" > "Nakit Akış" sekmesinden teyit edin.
-2. **Net Yatırımı Gör**: Teşvik sayesinde yatırım çıkışının düştüğünü doğrulayın.
-3. **Risk Analizi Çalıştır**:
-    - "Risk Analizi" sayfasına gidin.
-    - **Monte Carlo**: 500 İterasyon seçin.
-    - **Değişkenler**: "Motor Bloğu" Fiyatına %10 oynaklık (volatilite) verin.
-    - **Sonuç**: "Kâr Olasılığı" (Probability of Profit) %80'in üzerindeyse proje güvenlidir.
+### Adım E: Analiz
+1. **Teşvik Kontrolü**: Nakit Akım tablosunda Yatırım çıkışının netleştiğini görün.
+2. **Risk Analizi**: 500 İterasyon yapın, Fiyata %10 oynaklık verin. Kâr ihtimalini kontrol edin.
 """
 
 if st.session_state.language == 'tr':
